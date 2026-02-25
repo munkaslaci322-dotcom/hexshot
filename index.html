@@ -1,0 +1,3080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HexShot</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg:      #0d0d14;
+  --sidebar: #111118;
+  --card:    #16161f;
+  --card2:   #1c1c28;
+  --border:  #2a2a40;
+  --purple:  #a855f7;
+  --purple2: #7c3aed;
+  --green:   #22c55e;
+  --green2:  #16a34a;
+  --cyan:    #22d3ee;
+  --yellow:  #eab308;
+  --red:     #ef4444;
+  --p1c:     #22d3ee;
+  --p2c:     #f43f5e;
+  --text:    #e2e8f0;
+  --muted:   #64748b;
+  --dim:     #1e1e2e;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+}
+
+.screen{display:none;flex:1;overflow:hidden;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ══════════════════════
+   TOP NAV
+══════════════════════ */
+.topnav{
+  height:54px;
+  background:var(--sidebar);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  padding:0 20px;
+  gap:0;
+  flex-shrink:0;
+  z-index:50;
+}
+
+.nav-logo{
+  display:flex;align-items:center;gap:8px;
+  margin-right:28px;
+  cursor:default;
+}
+.nav-logo-icon{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,var(--purple2),var(--purple));
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;
+}
+.nav-logo-name{
+  font-size:1.1rem;font-weight:900;
+  color:#fff;letter-spacing:-0.03em;
+}
+.nav-logo-name span{color:var(--purple);}
+
+.nav-game-tab{
+  display:flex;align-items:center;gap:8px;
+  padding:0 18px;height:54px;
+  border-bottom:2px solid transparent;
+  cursor:pointer;
+  font-size:0.85rem;font-weight:600;
+  color:var(--muted);
+  transition:all 0.15s;
+  position:relative;
+}
+.nav-game-tab:hover{color:var(--text);}
+.nav-game-tab.active{color:#fff;border-bottom-color:var(--purple);}
+.nav-game-tab .tab-icon{font-size:1rem;}
+.nav-game-tab .tab-name{font-weight:700;}
+.nav-game-tab .tab-sub{font-size:0.68rem;color:var(--muted);font-weight:400;}
+
+.nav-right{
+  margin-left:auto;
+  display:flex;align-items:center;gap:10px;
+}
+
+.sol-balance{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 12px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:0.78rem;
+}
+.sol-icon{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#9945ff,#14f195);display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:900;color:#fff;}
+.sol-val{font-weight:700;color:#fff;font-family:'Space Mono',monospace;}
+.sol-usd{color:var(--muted);font-size:0.68rem;}
+
+.btn-connect{
+  padding:7px 18px;
+  background:var(--purple);
+  border:none;color:#fff;
+  font-family:'Inter',sans-serif;
+  font-size:0.82rem;font-weight:700;
+  border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  transition:all 0.15s;
+  white-space:nowrap;
+}
+.btn-connect:hover{opacity:0.85;}
+.btn-connect.connected{
+  background:rgba(168,85,247,0.12);
+  border:1px solid rgba(168,85,247,0.4);
+  color:var(--purple);
+}
+.btn-connect:disabled{opacity:0.6;cursor:not-allowed;}
+
+/* ── WALLET MODAL ── */
+#wallet-modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);
+  z-index:500;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);
+  animation:fadeIn 0.15s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.wallet-modal{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  width:360px;
+  overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(168,85,247,0.15);
+  animation:modalIn 0.2s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95)translateY(-8px)}to{opacity:1;transform:none}}
+
+.wm-header{
+  padding:22px 22px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,rgba(168,85,247,0.08),transparent);
+}
+.wm-title{font-size:1rem;font-weight:800;color:#fff;letter-spacing:-0.02em;}
+.wm-close{
+  width:28px;height:28px;border-radius:7px;
+  background:var(--card2);border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;font-size:0.8rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+}
+.wm-close:hover{border-color:var(--red);color:var(--red);}
+
+.wm-body{padding:18px;}
+
+.wm-wallet-btn{
+  width:100%;
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  cursor:pointer;
+  transition:all 0.18s;
+  margin-bottom:10px;
+  font-family:'Inter',sans-serif;
+  position:relative;
+  overflow:hidden;
+}
+.wm-wallet-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(168,85,247,0.08),transparent);
+  opacity:0;transition:opacity 0.18s;
+}
+.wm-wallet-btn:hover{border-color:var(--purple);transform:translateY(-1px);box-shadow:0 4px 20px rgba(168,85,247,0.15);}
+.wm-wallet-btn:hover::before{opacity:1;}
+
+.wm-wallet-logo{
+  width:42px;height:42px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;flex-shrink:0;
+}
+.wm-wallet-info{flex:1;text-align:left;}
+.wm-wallet-name{font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:2px;}
+.wm-wallet-desc{font-size:0.68rem;color:var(--muted);}
+.wm-wallet-badge{
+  padding:2px 8px;border-radius:20px;
+  font-size:0.6rem;font-weight:700;
+  background:rgba(34,197,94,0.15);
+  border:1px solid rgba(34,197,94,0.3);
+  color:var(--green);
+  text-transform:uppercase;letter-spacing:0.08em;
+}
+.wm-wallet-badge.detected{
+  background:rgba(168,85,247,0.15);
+  border-color:rgba(168,85,247,0.3);
+  color:var(--purple);
+}
+
+.wm-divider{
+  display:flex;align-items:center;gap:10px;
+  margin:14px 0;font-size:0.68rem;color:var(--muted);
+}
+.wm-divider::before,.wm-divider::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
+
+.wm-demo-btn{
+  width:100%;padding:11px;
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--muted);
+  font-family:'Inter',sans-serif;
+  font-size:0.82rem;font-weight:600;
+  cursor:pointer;
+  transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.wm-demo-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+
+.wm-footer{
+  padding:12px 18px;
+  border-top:1px solid var(--border);
+  text-align:center;
+  font-size:0.65rem;color:var(--muted);
+  line-height:1.5;
+}
+.wm-footer a{color:var(--purple);text-decoration:none;}
+.wm-footer a:hover{text-decoration:underline;}
+
+/* Connected address chip */
+.addr-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;
+  background:rgba(168,85,247,0.1);
+  border:1px solid rgba(168,85,247,0.3);
+  border-radius:8px;
+  font-size:0.75rem;font-weight:600;
+  color:var(--purple);cursor:pointer;
+  transition:all 0.15s;position:relative;
+}
+.addr-chip:hover{background:rgba(168,85,247,0.18);}
+.addr-chip .addr-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 6px var(--green);
+}
+.addr-chip .addr-text{font-family:'Space Mono',monospace;font-size:0.72rem;}
+
+/* Demo mode badge */
+.demo-badge{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 10px;
+  background:rgba(34,211,238,0.1);
+  border:1px solid rgba(34,211,238,0.3);
+  border-radius:8px;
+  font-size:0.72rem;font-weight:600;
+  color:var(--cyan);cursor:pointer;
+  transition:all 0.15s;
+}
+.demo-badge:hover{background:rgba(34,211,238,0.18);}
+
+/* ══════════════════════
+   LOBBY BODY
+══════════════════════ */
+#lobby .lobby-body{
+  flex:1;
+  display:flex;
+  overflow:hidden;
+}
+
+/* LEFT CHAT */
+.chat-panel{
+  width:260px;flex-shrink:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+
+.chat-header{
+  padding:12px 14px 10px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+  flex-shrink:0;
+}
+.chat-title{font-size:0.8rem;font-weight:700;color:var(--text);}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.online-num{margin-left:auto;font-size:0.68rem;color:var(--green);font-weight:600;}
+
+.chat-messages{
+  flex:1;overflow-y:auto;
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.chat-messages::-webkit-scrollbar{width:3px;}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+.chat-msg{display:flex;gap:8px;align-items:flex-start;}
+.chat-avatar{
+  width:28px;height:28px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:700;
+  flex-shrink:0;margin-top:1px;
+}
+.chat-msg-body{}
+.chat-msg-name{font-size:0.7rem;font-weight:700;margin-bottom:2px;}
+.chat-msg-text{font-size:0.76rem;color:#b0b8d0;line-height:1.4;}
+
+.chat-input-wrap{
+  padding:10px 12px;
+  border-top:1px solid var(--border);
+  display:flex;gap:8px;
+  flex-shrink:0;
+}
+.chat-input{
+  flex:1;
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:7px 10px;
+  font-family:'Inter',sans-serif;
+  font-size:0.78rem;
+  color:var(--text);
+  outline:none;
+  transition:border-color 0.15s;
+}
+.chat-input::placeholder{color:var(--muted);}
+.chat-input:focus{border-color:var(--purple);}
+.chat-send{
+  width:32px;height:32px;
+  background:var(--purple);border:none;
+  border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.85rem;
+  transition:opacity 0.15s;
+  flex-shrink:0;
+}
+.chat-send:hover{opacity:0.85;}
+
+/* MAIN LOBBY CONTENT */
+.lobby-center{
+  flex:1;
+  overflow-y:auto;
+  padding:28px 32px;
+}
+.lobby-center::-webkit-scrollbar{width:4px;}
+.lobby-center::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+.lobby-page-title{
+  font-size:0.68rem;font-weight:700;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:20px;
+}
+
+/* RECENT MULTIPLIERS (top bar like solpump) */
+.multiplier-bar{
+  display:flex;align-items:center;gap:6px;
+  margin-bottom:28px;
+  flex-wrap:wrap;
+}
+.mult-chip{
+  padding:4px 12px;
+  border-radius:6px;
+  font-size:0.78rem;font-weight:700;
+  font-family:'Space Mono',monospace;
+  border:1px solid transparent;
+  cursor:default;
+  animation:slideIn 0.3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:none;}}
+.mult-green{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.3);color:var(--green);}
+.mult-purple{background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.35);color:var(--purple);}
+.mult-yellow{background:rgba(234,179,8,0.12);border-color:rgba(234,179,8,0.3);color:var(--yellow);}
+.mult-red{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);color:var(--red);}
+
+/* GAME LAYOUT - left bet panel + right canvas area */
+.game-lobby-layout{
+  display:flex;
+  gap:20px;
+  align-items:flex-start;
+}
+
+/* BET PANEL */
+.bet-panel{
+  width:280px;flex-shrink:0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.bet-panel-header{
+  padding:14px 16px 12px;
+  border-bottom:1px solid var(--border);
+  font-size:0.72rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.12em;
+  color:var(--muted);
+}
+
+.bet-section{padding:16px;}
+.bet-label{
+  font-size:0.7rem;font-weight:600;
+  color:var(--muted);text-transform:uppercase;
+  letter-spacing:0.1em;margin-bottom:8px;
+}
+
+.bet-input-row{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 10px;
+  margin-bottom:8px;
+  transition:border-color 0.15s;
+}
+.bet-input-row:focus-within{border-color:var(--purple);}
+.bet-sol-icon{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#9945ff,#14f195);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:900;color:#fff;flex-shrink:0;}
+.bet-input{
+  flex:1;background:none;border:none;outline:none;
+  font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;
+  color:#fff;
+}
+.bet-usd{font-size:0.68rem;color:var(--muted);white-space:nowrap;font-weight:500;}
+
+.bet-quick{display:flex;gap:6px;margin-bottom:16px;}
+.bet-quick-btn{
+  flex:1;padding:5px;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:6px;font-size:0.72rem;font-weight:700;
+  color:var(--muted);cursor:pointer;
+  transition:all 0.15s;font-family:'Inter',sans-serif;
+}
+.bet-quick-btn:hover{border-color:var(--purple);color:var(--purple);}
+
+.bet-divider{height:1px;background:var(--border);margin:0 16px 16px;}
+
+.player-labels{padding:0 16px 12px;display:flex;flex-direction:column;gap:8px;}
+.player-bet-row{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;font-size:0.78rem;
+}
+.pb-avatar{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;}
+.pb-p1{background:rgba(34,211,238,0.15);}
+.pb-p2{background:rgba(244,63,94,0.15);}
+.pb-name{font-weight:600;flex:1;}
+.pb-name-p1{color:var(--p1c);}
+.pb-name-p2{color:var(--p2c);}
+.pb-joined{font-size:0.68rem;font-weight:700;color:var(--green);}
+
+.btn-place-bet{
+  display:block;width:calc(100% - 32px);
+  margin:0 16px 16px;
+  padding:13px;
+  background:var(--purple);
+  border:none;border-radius:9px;
+  font-family:'Inter',sans-serif;
+  font-size:0.92rem;font-weight:800;
+  color:#fff;cursor:pointer;
+  letter-spacing:0.03em;
+  transition:all 0.18s;
+  position:relative;overflow:hidden;
+}
+.btn-place-bet::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
+  opacity:0;transition:opacity 0.18s;
+}
+.btn-place-bet:hover{background:#9333ea;transform:translateY(-1px);box-shadow:0 6px 24px rgba(168,85,247,0.35);}
+.btn-place-bet:hover::before{opacity:1;}
+.btn-place-bet:disabled{background:var(--card2);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none;}
+
+.lobby-stats-row{
+  padding:12px 16px;
+  border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;
+  font-size:0.72rem;
+}
+.ls-item{}
+.ls-label{color:var(--muted);margin-bottom:2px;}
+.ls-value{font-family:'Space Mono',monospace;font-weight:700;color:#fff;}
+
+/* GAME PREVIEW (right side) */
+.game-preview{
+  flex:1;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.gp-header{
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.gp-title{font-size:0.95rem;font-weight:800;color:#fff;}
+.gp-live-pill{
+  padding:2px 8px;border-radius:20px;
+  background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);
+  color:var(--red);font-size:0.6rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+  display:flex;align-items:center;gap:4px;
+}
+.gp-live-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink 1.2s infinite;}
+
+.gp-body{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:32px;
+  background:radial-gradient(ellipse at 50% 30%, rgba(168,85,247,0.06) 0%, transparent 65%);
+  flex-direction:column;gap:20px;
+}
+
+.gp-preview-canvas{
+  width:320px;height:240px;
+  background:#0b0b16;
+  border-radius:10px;
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:4rem;
+  position:relative;
+  overflow:hidden;
+}
+.gp-preview-canvas::before{
+  content:'';position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(60deg,transparent,transparent 28px,rgba(168,85,247,0.04) 28px,rgba(168,85,247,0.04) 29px),
+    repeating-linear-gradient(-60deg,transparent,transparent 28px,rgba(168,85,247,0.04) 28px,rgba(168,85,247,0.04) 29px);
+}
+.gp-preview-emoji{position:relative;z-index:1;filter:drop-shadow(0 0 20px rgba(168,85,247,0.5));}
+
+.gp-how-to{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  max-width:380px;width:100%;
+}
+.gp-rule{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;
+  display:flex;gap:8px;align-items:flex-start;
+  font-size:0.74rem;line-height:1.4;
+}
+.gp-rule-icon{color:var(--purple);font-size:0.9rem;flex-shrink:0;margin-top:1px;}
+.gp-rule-text b{color:#fff;display:block;margin-bottom:1px;}
+.gp-rule-text span{color:var(--muted);}
+
+
+/* ══════════════════════
+   GAME SCREEN
+══════════════════════ */
+#game-screen.active{flex-direction:column;}
+
+.game-topbar{
+  height:52px;
+  background:var(--sidebar);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 18px;gap:14px;
+  flex-shrink:0;
+}
+.game-topbar .nav-logo-icon{width:28px;height:28px;font-size:0.85rem;}
+.game-topbar .nav-logo-name{font-size:0.92rem;}
+
+.gtb-sep{color:var(--muted);font-size:0.8rem;}
+.gtb-crumb{font-size:0.82rem;color:var(--muted);}
+.gtb-crumb span{color:var(--text);font-weight:600;}
+
+.timer-chip{
+  margin-left:auto;margin-right:auto;
+  display:flex;align-items:center;gap:8px;
+  padding:6px 16px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;
+}
+.timer-label{font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+#timer-display{
+  font-family:'Space Mono',monospace;
+  font-size:1.15rem;font-weight:700;
+  color:var(--green);min-width:44px;
+  transition:color 0.3s;
+}
+#timer-display.urgent{color:var(--red);animation:tp 0.5s ease-in-out infinite alternate;}
+@keyframes tp{from{opacity:1}to{opacity:0.4}}
+
+.btn-exit{
+  padding:5px 14px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--muted);font-family:'Inter',sans-serif;
+  font-size:0.76rem;font-weight:600;
+  border-radius:7px;cursor:pointer;transition:all 0.15s;
+}
+.btn-exit:hover{border-color:var(--red);color:var(--red);}
+
+/* GAME BODY = left player panel + center canvas + right player panel + right chat */
+.game-body{
+  flex:1;display:flex;overflow:hidden;
+}
+
+.game-main{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  gap:16px;padding:14px 18px;
+  overflow:hidden;
+}
+
+.player-panel{
+  width:136px;flex-shrink:0;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:14px 12px;
+  display:flex;flex-direction:column;gap:11px;
+  transition:border-color 0.25s,box-shadow 0.25s;
+}
+.player-panel.active-p1{border-color:var(--p1c);box-shadow:0 0 18px rgba(34,211,238,0.15);}
+.player-panel.active-p2{border-color:var(--p2c);box-shadow:0 0 18px rgba(244,63,94,0.15);}
+
+.pp-top{display:flex;align-items:center;gap:7px;}
+.pp-av{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;}
+.pp-av-p1{background:rgba(34,211,238,0.13);}
+.pp-av-p2{background:rgba(244,63,94,0.13);}
+.pp-name{font-size:0.75rem;font-weight:700;}
+.pp-name-p1{color:var(--p1c);}
+.pp-name-p2{color:var(--p2c);}
+
+.pp-score-wrap{text-align:center;}
+.pp-score-lbl{font-size:0.58rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:2px;}
+.pp-score{font-family:'Space Mono',monospace;font-size:2rem;font-weight:700;line-height:1;}
+.pp-score-p1{color:var(--p1c);}
+.pp-score-p2{color:var(--p2c);}
+
+.pp-div{height:1px;background:var(--border);}
+
+.pp-next{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.pp-next-lbl{font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);}
+
+.pp-sol{text-align:center;}
+.pp-sol-lbl{font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:2px;}
+.pp-sol-val{font-family:'Space Mono',monospace;font-size:0.78rem;font-weight:700;color:var(--yellow);}
+
+.turn-pill{
+  font-size:0.58rem;font-weight:700;
+  padding:3px 8px;border-radius:20px;
+  text-transform:uppercase;letter-spacing:0.1em;
+  text-align:center;display:none;
+}
+.player-panel.active-p1 .turn-pill{display:block;background:rgba(34,211,238,0.1);color:var(--p1c);border:1px solid rgba(34,211,238,0.3);}
+.player-panel.active-p2 .turn-pill{display:block;background:rgba(244,63,94,0.1);color:var(--p2c);border:1px solid rgba(244,63,94,0.3);}
+
+.game-canvas-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+#canvas{display:block;border:1px solid var(--border);border-radius:10px;cursor:crosshair;}
+#msg{font-size:0.72rem;font-weight:700;font-family:'Space Mono',monospace;text-align:center;min-height:1.1em;color:var(--green);letter-spacing:0.04em;}
+
+/* IN-GAME CHAT (right side) */
+.ingame-chat{
+  width:230px;flex-shrink:0;
+  background:var(--sidebar);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.igc-header{
+  padding:11px 13px 10px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:7px;
+  flex-shrink:0;
+}
+.igc-title{font-size:0.76rem;font-weight:700;}
+.igc-pill{
+  margin-left:auto;
+  padding:2px 8px;border-radius:12px;
+  background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);
+  font-size:0.6rem;font-weight:700;color:var(--purple);
+  text-transform:uppercase;letter-spacing:0.08em;
+}
+.igc-messages{
+  flex:1;overflow-y:auto;
+  padding:10px 11px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.igc-messages::-webkit-scrollbar{width:3px;}
+.igc-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+.igc-input-wrap{
+  padding:9px 11px;
+  border-top:1px solid var(--border);
+  display:flex;gap:7px;
+  flex-shrink:0;
+}
+
+
+/* ══════════════════════
+   RESULTS
+══════════════════════ */
+#results-screen.active{
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.1) 0%,transparent 55%),var(--bg);
+}
+
+.results-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  width:460px;
+  overflow:hidden;
+}
+.rc-header{
+  padding:28px 28px 22px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(to bottom,rgba(168,85,247,0.07),transparent);
+}
+.rc-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 12px;border-radius:20px;
+  background:rgba(100,116,139,0.12);border:1px solid var(--border);
+  font-size:0.62rem;font-weight:700;color:var(--muted);
+  letter-spacing:0.1em;text-transform:uppercase;margin-bottom:14px;
+}
+.rc-trophy{font-size:3rem;line-height:1;margin-bottom:8px;}
+.rc-winner{font-size:1.6rem;font-weight:900;letter-spacing:-0.03em;margin-bottom:4px;}
+.rw-p1{color:var(--p1c);}
+.rw-p2{color:var(--p2c);}
+.rw-draw{color:var(--text);}
+.rc-reason{font-size:0.78rem;color:var(--muted);}
+
+.rc-scores{display:grid;grid-template-columns:1fr 1fr;}
+.rc-col{padding:20px 24px;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.rc-col:first-child{border-right:1px solid var(--border);}
+.rc-name{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;}
+.rc-p1 .rc-name{color:var(--p1c);}
+.rc-p2 .rc-name{color:var(--p2c);}
+.rc-num{font-family:'Space Mono',monospace;font-size:2.4rem;font-weight:700;line-height:1;}
+.rc-p1 .rc-num{color:var(--p1c);}
+.rc-p2 .rc-num{color:var(--p2c);}
+.rc-lbl{font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+.rc-sol{font-family:'Space Mono',monospace;font-size:0.78rem;color:var(--yellow);margin-top:2px;}
+
+.rc-footer{
+  padding:16px 20px;
+  border-top:1px solid var(--border);
+  display:flex;gap:10px;
+}
+.rbtn{
+  flex:1;padding:11px;border-radius:9px;
+  font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:700;
+  cursor:pointer;letter-spacing:0.02em;border:none;
+  transition:opacity 0.15s,transform 0.15s;
+}
+.rbtn:hover{opacity:0.85;transform:translateY(-1px);}
+.rbtn-rematch{background:var(--purple);color:#fff;}
+.rbtn-lobby{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+.rbtn-lobby:hover{color:var(--text);}
+
+/* ══════════════════════
+   PROFILE BUTTON
+══════════════════════ */
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s;
+  position: relative;
+  user-select: none;
+}
+.profile-btn:hover { border-color: var(--purple); background: rgba(168,85,247,0.08); }
+.profile-btn.open { border-color: var(--purple); box-shadow: 0 0 0 2px rgba(168,85,247,0.2); }
+
+.profile-avatar {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--purple2), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+
+.profile-btn-info { display: flex; flex-direction: column; gap: 1px; }
+.profile-btn-name { font-size: 0.74rem; font-weight: 700; color: var(--text); line-height: 1; }
+.profile-btn-level { font-size: 0.6rem; color: var(--purple); font-weight: 600; }
+
+.profile-btn-badge {
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 16px; height: 16px;
+  background: var(--red);
+  border-radius: 50%;
+  font-size: 0.55rem; font-weight: 700;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--sidebar);
+}
+
+/* ══════════════════════
+   PROFILE OVERLAY
+══════════════════════ */
+#profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 200;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 62px 16px 0 0;
+}
+
+.profile-panel {
+  width: 480px;
+  max-height: calc(100vh - 78px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(168,85,247,0.1);
+  animation: ppSlideIn 0.2s ease;
+}
+@keyframes ppSlideIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:none} }
+.profile-panel::-webkit-scrollbar { width: 4px; }
+.profile-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* PP HEADER */
+.pp-hdr {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(168,85,247,0.08) 0%, transparent 60%);
+}
+.pp-hdr-left { display: flex; align-items: flex-start; gap: 14px; }
+
+.pp-big-avatar {
+  width: 60px; height: 60px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--purple2), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(168,85,247,0.3);
+}
+
+.pp-username {
+  font-size: 1.1rem; font-weight: 800; color: #fff;
+  letter-spacing: -0.02em; margin-bottom: 2px;
+}
+.pp-joined { font-size: 0.68rem; color: var(--muted); margin-bottom: 8px; }
+
+.pp-level-wrap {}
+.pp-level-bar-bg {
+  width: 180px; height: 5px;
+  background: var(--card2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.pp-level-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple2), var(--purple));
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+.pp-level-txt { font-size: 0.65rem; color: var(--muted); }
+
+.pp-close {
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--muted); width: 28px; height: 28px;
+  border-radius: 7px; cursor: pointer; font-size: 0.75rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.pp-close:hover { border-color: var(--red); color: var(--red); }
+
+/* RANK ROW */
+.pp-rank-row {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.pp-rank-badge {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.pp-rank-icon { font-size: 1.4rem; }
+.pp-rank-title { font-size: 0.85rem; font-weight: 700; color: #fff; }
+.pp-rank-sub { font-size: 0.62rem; color: var(--muted); margin-top: 1px; }
+
+.pp-rank-next { text-align: right; }
+.pp-rank-next-lbl { font-size: 0.62rem; color: var(--muted); margin-bottom: 2px; }
+.pp-rank-next-val { font-size: 0.78rem; font-weight: 600; color: var(--purple); }
+
+/* TABS */
+.pp-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+}
+.pp-tab {
+  padding: 11px 14px;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.pp-tab:hover { color: var(--text); }
+.pp-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+.pp-tab-content { padding: 16px 20px; }
+
+/* STAT PERIOD BUTTONS */
+.pp-stat-period { display: flex; gap: 6px; margin-bottom: 14px; }
+.pp-period-btn {
+  padding: 4px 12px;
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 6px; font-size: 0.72rem; font-weight: 700;
+  color: var(--muted); cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+}
+.pp-period-btn:hover { color: var(--text); }
+.pp-period-btn.active { background: rgba(168,85,247,0.15); border-color: var(--purple); color: var(--purple); }
+
+/* STAT GRID 4 cards */
+.pp-stat-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 8px; margin-bottom: 14px;
+}
+.pp-stat-card {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  transition: border-color 0.15s;
+}
+.pp-stat-card:hover { border-color: rgba(168,85,247,0.3); }
+.pp-sc-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; }
+.pp-sc-val { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: #fff; }
+.pp-sc-lbl { font-size: 0.6rem; color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* SOL STATS */
+.pp-sol-stats {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.pp-sol-row { display: flex; gap: 0; }
+.pp-sol-item { flex: 1; padding: 0 16px; border-right: 1px solid var(--border); }
+.pp-sol-item:first-child { padding-left: 0; }
+.pp-sol-item:last-child { border-right: none; }
+.pp-sol-lbl { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.pp-sol-val2 { font-family: 'Space Mono', monospace; font-size: 1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 4px; }
+.sol-dot { color: #9945ff; font-size: 0.85rem; }
+.pp-sol-usd { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+.profit-pos { color: var(--green) !important; }
+.profit-neg { color: var(--red) !important; }
+
+/* EXTRA STATS */
+.pp-extra-stats {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.pp-extra-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.78rem;
+}
+.pp-extra-row:last-child { border-bottom: none; }
+.pp-extra-lbl { color: var(--muted); }
+.pp-extra-val { font-weight: 700; color: #fff; font-family: 'Space Mono', monospace; font-size: 0.75rem; }
+
+/* HISTORY */
+.pp-history-list { display: flex; flex-direction: column; gap: 8px; min-height: 100px; }
+.pp-history-empty { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 30px 0; line-height: 1.7; }
+
+.pp-history-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.15s;
+}
+.pp-history-item:hover { border-color: rgba(168,85,247,0.25); }
+
+.phi-result {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.phi-win { background: rgba(34,197,94,0.15); }
+.phi-loss { background: rgba(239,68,68,0.15); }
+.phi-draw { background: rgba(100,116,139,0.15); }
+.phi-forfeit { background: rgba(234,179,8,0.12); }
+
+.phi-info { flex: 1; }
+.phi-game { font-size: 0.78rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.phi-detail { font-size: 0.65rem; color: var(--muted); }
+
+.phi-score { text-align: center; min-width: 60px; }
+.phi-score-num { font-family: 'Space Mono', monospace; font-size: 0.82rem; font-weight: 700; color: #fff; }
+.phi-score-lbl { font-size: 0.58rem; color: var(--muted); }
+
+.phi-sol { text-align: right; min-width: 70px; }
+.phi-sol-val { font-family: 'Space Mono', monospace; font-size: 0.78rem; font-weight: 700; }
+.phi-sol-lbl { font-size: 0.58rem; color: var(--muted); margin-top: 1px; }
+.phi-pos { color: var(--green); }
+.phi-neg { color: var(--red); }
+.phi-neu { color: var(--muted); }
+
+/* ACHIEVEMENTS */
+.pp-ach-grid {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: 10px;
+}
+.pp-ach-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 12px 14px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.pp-ach-item.unlocked { border-color: rgba(168,85,247,0.3); }
+.pp-ach-item.locked { opacity: 0.45; }
+.pp-ach-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(168,85,247,0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.pp-ach-item.unlocked:hover::before { opacity: 1; }
+
+.pp-ach-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; flex-shrink: 0;
+}
+.ach-unlocked-icon { background: linear-gradient(135deg,rgba(168,85,247,0.2),rgba(168,85,247,0.08)); }
+.ach-locked-icon { background: var(--card); }
+
+.pp-ach-text {}
+.pp-ach-name { font-size: 0.78rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
+.pp-ach-desc { font-size: 0.65rem; color: var(--muted); line-height: 1.3; }
+.pp-ach-unlocked-lbl { font-size: 0.58rem; color: var(--purple); margin-top: 3px; font-weight: 600; }
+.pp-ach-locked-lbl { font-size: 0.58rem; color: var(--muted); margin-top: 3px; }
+
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOBBY ══════════ -->
+<div id="lobby" class="screen active">
+
+  <!-- TOP NAV -->
+  <nav class="topnav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">⬡</div>
+      <div class="nav-logo-name">Hex<span>Shot</span></div>
+    </div>
+
+    <div class="nav-game-tab active">
+      <span class="tab-icon">⬡</span>
+      <div>
+        <div class="tab-name">Bubble Shooter</div>
+        <div class="tab-sub" id="tab-games-count">0 Games</div>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <div class="sol-balance" id="sol-price-display" style="background:rgba(153,69,255,0.08);border-color:rgba(153,69,255,0.25);">
+        <div class="sol-icon" style="background:linear-gradient(135deg,#9945ff,#14f195)">◎</div>
+        <span class="sol-val" id="sol-price-chip" style="color:#b06bff;font-size:0.72rem;">SOL $—</span>
+      </div>
+      <div class="sol-balance" id="sol-balance-display" style="display:none">
+        <div class="sol-icon">◎</div>
+        <span class="sol-val" id="wallet-sol">2.500</span>
+        <span class="sol-usd" id="wallet-usd">$0.00</span>
+      </div>
+      <!-- Shown when disconnected -->
+      <button class="btn-connect" id="btn-connect" onclick="openWalletModal()">
+        🔗 Connect
+      </button>
+      <!-- Shown when connected: address chip -->
+      <div class="addr-chip" id="addr-chip" style="display:none" onclick="openWalletModal()">
+        <div class="addr-dot"></div>
+        <span class="addr-text" id="addr-text">—</span>
+      </div>
+      <!-- Demo mode badge -->
+      <div class="demo-badge" id="demo-badge" style="display:none" onclick="openWalletModal()">
+        🎮 Demo
+      </div>
+
+      <!-- WALLET MODAL -->
+      <div id="wallet-modal-overlay" style="display:none" onclick="if(event.target===this)closeWalletModal()">
+        <div class="wallet-modal">
+          <div class="wm-header">
+            <div class="wm-title">Connect Wallet</div>
+            <div class="wm-close" onclick="closeWalletModal()">✕</div>
+          </div>
+          <!-- DYNAMIC MODAL BODY — filled by JS -->
+          <div class="wm-body" id="wm-body"></div>
+          <div class="wm-footer" id="wm-footer-msg"></div>
+        </div>
+      </div>
+      <div class="profile-btn" id="profile-btn" onclick="toggleProfile()" title="Profile">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div class="profile-btn-info" id="profile-btn-info" style="display:none">
+          <div class="profile-btn-name">Player</div>
+          <div class="profile-btn-level">Lvl <span id="profile-btn-level">1</span></div>
+        </div>
+        <div class="profile-btn-badge" id="profile-notif" style="display:none">1</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PROFILE PANEL OVERLAY -->
+  <div id="profile-overlay" style="display:none" onclick="if(event.target===this)closeProfile()">
+    <div class="profile-panel" id="profile-panel">
+
+      <!-- HEADER -->
+      <div class="pp-hdr">
+        <div class="pp-hdr-left">
+          <div class="pp-big-avatar" id="pp-big-avatar">?</div>
+          <div>
+            <div class="pp-username" id="pp-username">Guest</div>
+            <div class="pp-joined">Member since today</div>
+            <div class="pp-level-wrap">
+              <div class="pp-level-bar-bg">
+                <div class="pp-level-bar-fill" id="pp-level-bar" style="width:0%"></div>
+              </div>
+              <div class="pp-level-txt">Lvl <span id="pp-level-num">1</span> · <span id="pp-xp-txt">0 / 100 XP</span></div>
+            </div>
+          </div>
+        </div>
+        <button class="pp-close" onclick="closeProfile()">✕</button>
+      </div>
+
+      <!-- RANK BADGE -->
+      <div class="pp-rank-row">
+        <div class="pp-rank-badge" id="pp-rank-badge">
+          <span class="pp-rank-icon">🌱</span>
+          <div>
+            <div class="pp-rank-title" id="pp-rank-title">Rookie</div>
+            <div class="pp-rank-sub">Current Rank</div>
+          </div>
+        </div>
+        <div class="pp-rank-next">
+          <div class="pp-rank-next-lbl">Next rank</div>
+          <div class="pp-rank-next-val" id="pp-rank-next">Silver · 5 games</div>
+        </div>
+      </div>
+
+      <!-- STAT TABS -->
+      <div class="pp-tabs">
+        <div class="pp-tab active" onclick="switchProfileTab('stats',this)">📊 Statistics</div>
+        <div class="pp-tab" onclick="switchProfileTab('history',this)">📋 History</div>
+        <div class="pp-tab" onclick="switchProfileTab('achievements',this)">🏅 Achievements</div>
+      </div>
+
+      <!-- STATS TAB -->
+      <div class="pp-tab-content" id="tab-stats">
+        <div class="pp-stat-period">
+          <button class="pp-period-btn active" onclick="switchPeriod('24h',this)">24H</button>
+          <button class="pp-period-btn" onclick="switchPeriod('7d',this)">7D</button>
+          <button class="pp-period-btn" onclick="switchPeriod('all',this)">ALL</button>
+        </div>
+
+        <div class="pp-stat-grid">
+          <div class="pp-stat-card">
+            <div class="pp-sc-icon" style="background:rgba(168,85,247,0.12);color:var(--purple)">🎮</div>
+            <div class="pp-sc-val" id="stat-games">0</div>
+            <div class="pp-sc-lbl">Games Played</div>
+          </div>
+          <div class="pp-stat-card">
+            <div class="pp-sc-icon" style="background:rgba(34,197,94,0.12);color:var(--green)">🏆</div>
+            <div class="pp-sc-val" id="stat-wins">0</div>
+            <div class="pp-sc-lbl">Wins</div>
+          </div>
+          <div class="pp-stat-card">
+            <div class="pp-sc-icon" style="background:rgba(239,68,68,0.12);color:var(--red)">💀</div>
+            <div class="pp-sc-val" id="stat-losses">0</div>
+            <div class="pp-sc-lbl">Losses</div>
+          </div>
+          <div class="pp-stat-card">
+            <div class="pp-sc-icon" style="background:rgba(234,179,8,0.12);color:var(--yellow)">⚖️</div>
+            <div class="pp-sc-val" id="stat-draws">0</div>
+            <div class="pp-sc-lbl">Draws</div>
+          </div>
+        </div>
+
+        <div class="pp-sol-stats">
+          <div class="pp-sol-row">
+            <div class="pp-sol-item">
+              <div class="pp-sol-lbl">Total Wagered</div>
+              <div class="pp-sol-val2"><span class="sol-dot">◎</span> <span id="stat-wagered">0.000</span></div>
+              <div class="pp-sol-usd" id="stat-wagered-usd">$0.00</div>
+            </div>
+            <div class="pp-sol-item">
+              <div class="pp-sol-lbl">Total Won</div>
+              <div class="pp-sol-val2"><span class="sol-dot">◎</span> <span id="stat-won">0.000</span></div>
+              <div class="pp-sol-usd" id="stat-won-usd">$0.00</div>
+            </div>
+            <div class="pp-sol-item">
+              <div class="pp-sol-lbl">Net Profit</div>
+              <div class="pp-sol-val2" id="stat-profit-wrap"><span class="sol-dot">◎</span> <span id="stat-profit">0.000</span></div>
+              <div class="pp-sol-usd" id="stat-profit-usd">$0.00</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pp-extra-stats">
+          <div class="pp-extra-row"><span class="pp-extra-lbl">Win Rate</span><span class="pp-extra-val" id="stat-winrate">—</span></div>
+          <div class="pp-extra-row"><span class="pp-extra-lbl">Best Score</span><span class="pp-extra-val" id="stat-best-score">—</span></div>
+          <div class="pp-extra-row"><span class="pp-extra-lbl">Avg Score</span><span class="pp-extra-val" id="stat-avg-score">—</span></div>
+          <div class="pp-extra-row"><span class="pp-extra-lbl">Biggest Win</span><span class="pp-extra-val" id="stat-biggest-win">—</span></div>
+          <div class="pp-extra-row"><span class="pp-extra-lbl">Longest Streak</span><span class="pp-extra-val" id="stat-streak">—</span></div>
+          <div class="pp-extra-row"><span class="pp-extra-lbl">Total Bubbles Popped</span><span class="pp-extra-val" id="stat-bubbles">0</span></div>
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div class="pp-tab-content" id="tab-history" style="display:none">
+        <div class="pp-history-list" id="history-list">
+          <div class="pp-history-empty">No games played yet.<br>Place a bet and start your first game!</div>
+        </div>
+      </div>
+
+      <!-- ACHIEVEMENTS TAB -->
+      <div class="pp-tab-content" id="tab-achievements" style="display:none">
+        <div class="pp-ach-grid" id="ach-grid"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="lobby-body">
+
+    <!-- LEFT: GLOBAL CHAT -->
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="online-dot"></div>
+        <div class="chat-title">Global Chat</div>
+        <div class="online-num" id="online-count">271 online</div>
+      </div>
+      <div class="chat-messages" id="global-messages"></div>
+      <div class="chat-input-wrap">
+        <input class="chat-input" id="global-input" placeholder="Type message..." maxlength="120" onkeydown="if(event.key==='Enter')sendGlobalMsg()">
+        <button class="chat-send" onclick="sendGlobalMsg()">➤</button>
+      </div>
+    </div>
+
+    <!-- CENTER: GAME CONTENT -->
+    <div class="lobby-center">
+      <div class="lobby-page-title">HEXSHOT — BUBBLE SHOOTER</div>
+
+      <!-- RECENT SCORES BAR -->
+      <div class="multiplier-bar" id="score-bar">
+        <span style="font-size:0.68rem;color:var(--muted);margin-right:4px;">Recent:</span>
+      </div>
+
+      <!-- GAME LAYOUT -->
+      <div class="game-lobby-layout">
+
+        <!-- BET PANEL -->
+        <div class="bet-panel">
+          <div class="bet-panel-header">⬡ Place Your Bet</div>
+
+          <div class="bet-section">
+            <div class="bet-label">Bet Amount <span style="color:var(--muted);font-weight:400" id="bet-usd-label">($0.00)</span></div>
+            <div class="bet-input-row">
+              <div class="bet-sol-icon">◎</div>
+              <input class="bet-input" id="bet-amount" type="number" value="0.10" min="0.01" max="10" step="0.01" oninput="updateBetUSD()">
+              <span class="bet-usd" id="bet-usd-val">≈ $0.00</span>
+            </div>
+            <div class="bet-quick">
+              <button class="bet-quick-btn" onclick="setBet(0.5)">½</button>
+              <button class="bet-quick-btn" onclick="setBet(null,'x2')">2×</button>
+              <button class="bet-quick-btn" onclick="setBet(null,'max')">MAX</button>
+            </div>
+          </div>
+
+          <div class="bet-divider"></div>
+
+          <div class="player-labels">
+            <div class="bet-label" style="padding:0 0 4px">Players</div>
+            <div class="player-bet-row">
+              <div class="pb-avatar pb-p1">🔵</div>
+              <div class="pb-name pb-name-p1">Player 1</div>
+              <div class="pb-joined" id="p1-status">WAITING</div>
+            </div>
+            <div class="player-bet-row">
+              <div class="pb-avatar pb-p2">🔴</div>
+              <div class="pb-name pb-name-p2">Player 2</div>
+              <div class="pb-joined" id="p2-status" style="color:var(--muted)">—</div>
+            </div>
+          </div>
+
+          <button class="btn-place-bet" id="btn-place-bet" onclick="placeBet()">🎮 Create Room & Bet</button>
+          <button class="btn-place-bet" onclick="showJoinModal()" style="margin-top:8px;background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.3);color:#22d3ee;">🔗 Join Room with Code</button>
+
+          <div class="lobby-stats-row">
+            <div class="ls-item">
+              <div class="ls-label">Games Played</div>
+              <div class="ls-value" id="ls-games">0</div>
+            </div>
+            <div class="ls-item" style="text-align:right">
+              <div class="ls-label">Best Score</div>
+              <div class="ls-value" id="ls-best">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GAME PREVIEW -->
+        <div class="game-preview">
+          <div class="gp-header">
+            <div class="gp-title">⬡ Bubble Shooter</div>
+            <div class="gp-live-pill">
+              <div class="gp-live-dot"></div>
+              LIVE
+            </div>
+            <div style="margin-left:auto;font-size:0.72rem;color:var(--muted);">4 min · 2 players</div>
+          </div>
+          <div class="gp-body">
+            <div class="gp-preview-canvas">
+              <span class="gp-preview-emoji">⬡</span>
+            </div>
+            <div class="gp-how-to">
+              <div class="gp-rule">
+                <div class="gp-rule-icon">🎯</div>
+                <div class="gp-rule-text"><b>Aim & Shoot</b><span>Move mouse, click to fire at the hex grid</span></div>
+              </div>
+              <div class="gp-rule">
+                <div class="gp-rule-icon">💥</div>
+                <div class="gp-rule-text"><b>Pop Groups</b><span>Match 2+ same-color bubbles — 1 pt each</span></div>
+              </div>
+              <div class="gp-rule">
+                <div class="gp-rule-icon">🌊</div>
+                <div class="gp-rule-text"><b>Gravity</b><span>Disconnected bubbles fall — they score too</span></div>
+              </div>
+              <div class="gp-rule">
+                <div class="gp-rule-icon">⏱</div>
+                <div class="gp-rule-text"><b>4-Min Limit</b><span>Most points when time/grid is up wins</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ GAME SCREEN ══════════ -->
+<div id="game-screen" class="screen">
+  <div class="game-topbar">
+    <div class="nav-logo-icon">⬡</div>
+    <div class="nav-logo-name" style="font-size:0.9rem;">Hex<span style="color:var(--purple)">Shot</span></div>
+    <div class="gtb-sep">›</div>
+    <div class="gtb-crumb"><span>Bubble Shooter</span></div>
+
+    <div class="timer-chip">
+      <span class="timer-label">Time</span>
+      <span id="timer-display">4:00</span>
+    </div>
+
+    <div style="margin-left:auto">
+      <button class="btn-exit" id="btn-exit">⟵ Exit</button>
+    </div>
+  </div>
+
+  <div class="game-body">
+    <div class="game-main">
+      <!-- P1 Panel -->
+      <div class="player-panel" id="panel-p1">
+        <div class="pp-top">
+          <div class="pp-av pp-av-p1">🔵</div>
+          <div class="pp-name pp-name-p1">Player 1</div>
+        </div>
+        <div class="pp-score-wrap">
+          <div class="pp-score-lbl">Score</div>
+          <div class="pp-score pp-score-p1" id="score-p1">0</div>
+        </div>
+        <div class="pp-div"></div>
+        <div class="pp-sol">
+          <div class="pp-sol-lbl">Bet</div>
+          <div class="pp-sol-val" id="p1-bet-display">◎ 0.00</div>
+        </div>
+        <div class="pp-div"></div>
+        <div class="pp-next">
+          <div class="pp-next-lbl">Next</div>
+          <canvas id="next-p1" width="34" height="34"></canvas>
+        </div>
+        <div class="turn-pill">◆ Your Turn</div>
+      </div>
+
+      <div class="game-canvas-wrap">
+        <canvas id="canvas" width="400" height="510"></canvas>
+        <div id="msg"></div>
+      </div>
+
+      <!-- P2 Panel -->
+      <div class="player-panel" id="panel-p2">
+        <div class="pp-top">
+          <div class="pp-av pp-av-p2">🔴</div>
+          <div class="pp-name pp-name-p2">Player 2</div>
+        </div>
+        <div class="pp-score-wrap">
+          <div class="pp-score-lbl">Score</div>
+          <div class="pp-score pp-score-p2" id="score-p2">0</div>
+        </div>
+        <div class="pp-div"></div>
+        <div class="pp-sol">
+          <div class="pp-sol-lbl">Bet</div>
+          <div class="pp-sol-val" id="p2-bet-display">◎ 0.00</div>
+        </div>
+        <div class="pp-div"></div>
+        <div class="pp-next">
+          <div class="pp-next-lbl">Next</div>
+          <canvas id="next-p2" width="34" height="34"></canvas>
+        </div>
+        <div class="turn-pill">◆ Your Turn</div>
+      </div>
+    </div>
+
+    <!-- IN-GAME PRIVATE CHAT -->
+    <div class="ingame-chat">
+      <div class="igc-header">
+        <span class="igc-title">💬 Game Chat</span>
+        <div class="igc-pill">Private</div>
+      </div>
+      <div class="igc-messages" id="game-messages"></div>
+      <div class="igc-input-wrap">
+        <input class="chat-input" id="game-input" placeholder="Message players..." maxlength="100" style="font-size:0.74rem;" onkeydown="if(event.key==='Enter')sendGameMsg()">
+        <button class="chat-send" onclick="sendGameMsg()" style="width:28px;height:28px;font-size:0.75rem;">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ RESULTS ══════════ -->
+<div id="results-screen" class="screen">
+  <div class="results-card">
+    <div class="rc-header">
+      <div class="rc-tag" id="rc-tag">Game Over</div>
+      <div class="rc-trophy" id="rc-trophy">🏆</div>
+      <div class="rc-winner" id="rc-winner"></div>
+      <div class="rc-reason" id="rc-reason"></div>
+    </div>
+    <div class="rc-scores">
+      <div class="rc-col rc-p1">
+        <div class="rc-name">🔵 Player 1</div>
+        <div class="rc-num" id="final-p1">0</div>
+        <div class="rc-lbl">Points</div>
+        <div class="rc-sol" id="final-sol-p1"></div>
+      </div>
+      <div class="rc-col rc-p2">
+        <div class="rc-name">🔴 Player 2</div>
+        <div class="rc-num" id="final-p2">0</div>
+        <div class="rc-lbl">Points</div>
+        <div class="rc-sol" id="final-sol-p2"></div>
+      </div>
+    </div>
+    <div class="rc-footer">
+      <button class="rbtn rbtn-rematch" onclick="rematch()">↺ Rematch</button>
+      <button class="rbtn rbtn-lobby" onclick="goLobby()">⟵ Lobby</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// CONFIG — change this after Railway deploy!
+// ══════════════════════════════════════
+const WS_URL = window.location.hostname === 'localhost'
+  ? 'ws://localhost:3001'
+  : 'wss://YOUR-RAILWAY-APP.railway.app'; // <-- REPLACE after deploy
+
+// ══════════════════════════════════════
+// WEBSOCKET CLIENT
+// ══════════════════════════════════════
+let ws = null;
+let myPlayerIdx = null;  // 0 or 1
+let myRoomId = null;
+let wsReady = false;
+let pendingAction = null;
+
+function connectWS() {
+  if (ws && ws.readyState <= 1) return;
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    wsReady = true;
+    console.log('WS connected');
+    if (pendingAction) { pendingAction(); pendingAction = null; }
+  };
+
+  ws.onmessage = (e) => {
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }
+    handleServerMsg(msg);
+  };
+
+  ws.onclose = () => {
+    wsReady = false;
+    console.warn('WS disconnected');
+    if (gameActive) {
+      showToast('⚠️ Connection lost! Reconnecting...');
+      setTimeout(connectWS, 2000);
+    }
+  };
+
+  ws.onerror = (e) => console.error('WS error', e);
+}
+
+function wsSend(data) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  } else {
+    console.warn('WS not ready, queuing');
+    pendingAction = () => ws.send(JSON.stringify(data));
+    connectWS();
+  }
+}
+
+function handleServerMsg(msg) {
+  switch (msg.type) {
+    case 'room_created':
+      myPlayerIdx = 0;
+      myRoomId = msg.roomId;
+      // Show waiting for opponent screen
+      showWaitingForOpponent(msg.roomId, msg.bet);
+      break;
+
+    case 'room_joined':
+      myPlayerIdx = 1;
+      myRoomId = msg.roomId;
+      // Sync grid from server
+      grid = msg.grid;
+      bubbles = [...msg.bubbles];
+      nextBubbles = [...msg.nextBubbles];
+      break;
+
+    case 'opponent_joined':
+      hideWaitingOverlay();
+      showToast(`🔴 Opponent joined! Game starting...`);
+      break;
+
+    case 'game_start':
+      grid = msg.grid;
+      bubbles = [...msg.bubbles];
+      nextBubbles = [...msg.nextBubbles];
+      currentPlayer = msg.currentPlayer;
+      showScreen('game-screen');
+      startGameLocal();
+      break;
+
+    case 'shot_result':
+      // Server authoritative update
+      grid = msg.grid;
+      scores = [...msg.scores];
+      bubbles = [...msg.bubbles];
+      nextBubbles = [...msg.nextBubbles];
+      currentPlayer = msg.currentPlayer;
+
+      // Spawn particles for popped bubbles
+      if (msg.popped && msg.popped.length > 0) {
+        msg.popped.forEach(({r,c}) => spawnParticles(hexX(c,r), hexY(r), grid[r] ? (grid[r][c] || '#fff') : '#fff'));
+      }
+
+      updateScoreDisplay();
+      for (let p = 0; p < 2; p++) drawNextBubble(p);
+      updatePanels();
+
+      const totalPopped = (msg.popped ? msg.popped.length : 0) + (msg.fallen || 0);
+      if (totalPopped > 0) {
+        const shooter = msg.playerIdx;
+        showMsg(shooter === myPlayerIdx
+          ? `+${totalPopped} pts! 🎉`
+          : `Opponent +${totalPopped} pts`
+        );
+      }
+
+      shooting = false;
+      render();
+      break;
+
+    case 'game_end':
+      endGameFromServer(msg);
+      break;
+
+    case 'timer':
+      timeLeft = msg.timeLeft;
+      updateTimerDisplay();
+      break;
+
+    case 'chat':
+      const name = msg.playerIdx === myPlayerIdx ? 'You' : 'Opponent';
+      const color = msg.playerIdx === 0 ? '#22d3ee' : '#f43f5e';
+      addGameMsg(name, msg.text, color);
+      break;
+
+    case 'opponent_disconnected':
+      showToast('🚪 Opponent disconnected! You win!');
+      break;
+
+    case 'error':
+      showToast('❌ ' + msg.msg);
+      break;
+
+    case 'pong':
+      break;
+  }
+}
+
+// Keep-alive ping
+setInterval(() => { if (wsReady) wsSend({ type: 'ping' }); }, 25000);
+
+// ══════════════════════════════════════
+// WAITING OVERLAY
+// ══════════════════════════════════════
+function showWaitingForOpponent(roomId, bet) {
+  showScreen('game-screen');
+  // show overlay on top of game screen
+  let overlay = document.getElementById('waiting-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'waiting-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;background:rgba(13,13,20,0.95);
+      z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+    `;
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div style="font-size:3rem;">⬡</div>
+    <div style="font-size:1.4rem;font-weight:800;color:#fff;">Waiting for opponent...</div>
+    <div style="font-size:0.9rem;color:#64748b;">Share this room code with your friend:</div>
+    <div style="font-family:'Space Mono',monospace;font-size:2rem;font-weight:700;color:#a855f7;
+         background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);
+         padding:14px 30px;border-radius:12px;letter-spacing:0.1em;cursor:pointer;"
+         onclick="copyRoomCode('${roomId}')"
+         title="Click to copy">${roomId}</div>
+    <div style="font-size:0.75rem;color:#64748b;">Click code to copy · Bet: ◎ ${bet} SOL</div>
+    <div style="width:200px;height:3px;background:rgba(168,85,247,0.2);border-radius:2px;overflow:hidden;margin-top:10px">
+      <div style="height:100%;background:#a855f7;animation:progress 2s linear infinite;border-radius:2px"></div>
+    </div>
+    <style>@keyframes progress{from{width:0%}to{width:100%}}</style>
+    <button onclick="cancelRoom()" style="padding:8px 20px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+      color:#ef4444;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:600;">
+      Cancel
+    </button>
+  `;
+  overlay.style.display = 'flex';
+}
+
+function copyRoomCode(code) {
+  navigator.clipboard.writeText(code).then(() => showToast('📋 Room code copied!')).catch(() => {});
+}
+
+function hideWaitingOverlay() {
+  const overlay = document.getElementById('waiting-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function cancelRoom() {
+  hideWaitingOverlay();
+  goLobby();
+}
+
+// ══════════════════════════════════════
+// JOIN ROOM UI
+// ══════════════════════════════════════
+function showJoinModal() {
+  const code = prompt('Enter Room Code from your friend:');
+  if (!code) return;
+  if (!(walletConnected || isDemoMode)) { showToast('❌ Connect wallet first!'); return; }
+  wsSend({ type: 'join_room', roomId: code.trim(), walletAddress: phantomPublicKey || 'demo_' + Math.random().toString(36).slice(2,8) });
+}
+
+// ══════════════════════════════════════
+// TOAST NOTIFICATION
+// ══════════════════════════════════════
+function showToast(text, duration=3000) {
+  let toast = document.getElementById('toast-notif');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast-notif';
+    toast.style.cssText = `
+      position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+      background:#1c1c28;border:1px solid #2a2a40;color:#e2e8f0;
+      padding:12px 24px;border-radius:10px;font-size:0.85rem;font-weight:600;
+      z-index:9999;opacity:0;transition:opacity 0.2s;pointer-events:none;
+      box-shadow:0 8px 30px rgba(0,0,0,0.5);white-space:nowrap;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = text;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, duration);
+}
+
+// ══════════════════════════════════════
+// SCREEN MANAGEMENT
+// ══════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goLobby() {
+  stopGame();
+  hideWaitingOverlay();
+  showScreen('lobby');
+}
+
+function endGameFromServer(msg) {
+  stopGame();
+  hideWaitingOverlay();
+
+  const totalPot = msg.bet * 2;
+  const winner = msg.winner;
+  const [s0, s1] = msg.scores;
+
+  document.getElementById('final-p1').textContent = s0;
+  document.getElementById('final-p2').textContent = s1;
+
+  const w = document.getElementById('rc-winner');
+  const t = document.getElementById('rc-trophy');
+  const rsn = document.getElementById('rc-reason');
+  t.textContent = winner === -1 ? '🤝' : '🏆';
+
+  const reasonMap = { time: '⏱ Time ran out', clear: '🎉 Grid cleared!', forfeit: '🚪 Opponent forfeited' };
+  rsn.textContent = reasonMap[msg.reason] || '';
+
+  let p1Sol = '', p2Sol = '', myResult = 'draw', solChange = 0;
+
+  if (winner === -1) {
+    w.textContent = "It\'s a Draw!"; w.className = 'rc-winner';
+    p1Sol = p2Sol = msg.bet > 0 ? '◎ ' + msg.bet.toFixed(2) + ' returned' : '';
+    myResult = 'draw';
+    if ((walletConnected || isDemoMode) && msg.bet > 0) { walletBalance += msg.bet; updateWalletDisplay(); }
+  } else if (winner === myPlayerIdx) {
+    w.textContent = myPlayerIdx === 0 ? 'Player 1 Wins!' : 'Player 2 Wins!';
+    w.className = myPlayerIdx === 0 ? 'rc-winner rw-p1' : 'rc-winner rw-p2';
+    if (myPlayerIdx === 0) p1Sol = msg.bet > 0 ? '◎ +' + totalPot.toFixed(2) + ' won! 🎉' : '';
+    else p2Sol = msg.bet > 0 ? '◎ +' + totalPot.toFixed(2) + ' won! 🎉' : '';
+    myResult = 'win'; solChange = msg.bet > 0 ? msg.bet : 0;
+    if ((walletConnected || isDemoMode) && msg.bet > 0) { walletBalance += totalPot; updateWalletDisplay(); }
+    showToast('🏆 You win! +◎' + totalPot.toFixed(2));
+  } else {
+    w.textContent = winner === 0 ? 'Player 1 Wins!' : 'Player 2 Wins!';
+    w.className = winner === 0 ? 'rc-winner rw-p1' : 'rc-winner rw-p2';
+    myResult = 'loss'; solChange = msg.bet > 0 ? -msg.bet : 0;
+  }
+
+  document.getElementById('final-sol-p1').textContent = p1Sol;
+  document.getElementById('final-sol-p2').textContent = p2Sol;
+
+  recordGameResult(myPlayerIdx || 0, myResult, msg.reason, s0, s1, msg.bet || 0, solChange);
+  addScoreBar(s0, s1);
+  resetBetPanel();
+  showScreen('results-screen');
+}
+
+function rematch() { goLobby(); }
+
+document.getElementById('btn-exit').addEventListener('click', () => {
+  if (!gameActive) { stopGame(); showScreen('lobby'); return; }
+  const betWarn = gameBet > 0
+    ? '\nThe other player wins the pot (◎' + (gameBet*2).toFixed(2) + ').'
+    : '';
+  const confirmed = window.confirm('Exit the game? You forfeit!' + betWarn);
+  if (!confirmed) return;
+  wsSend({ type: 'forfeit' });
+  stopGame();
+  goLobby();
+});
+
+// ══════════════════════════════════════
+// WALLET & BETTING
+// ══════════════════════════════════════
+let walletConnected = false;
+let walletBalance = 2.5; // SOL
+let SOL_USD = 0; // fetched live
+let currentBet = 0.10;
+let gamesPlayed = 0;
+let bestScores = [0, 0];
+let gameBet = 0;
+
+// ── LIVE SOL PRICE ──
+async function fetchSolPrice() {
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+    const data = await res.json();
+    SOL_USD = data.solana.usd;
+    document.getElementById('sol-price-chip').textContent = `SOL $${SOL_USD.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    updateBetUSD();
+    updateWalletDisplay();
+  } catch(e) {
+    // fallback if blocked
+    if (!SOL_USD) SOL_USD = 170;
+    document.getElementById('sol-price-chip').textContent = `SOL ~$${SOL_USD}`;
+  }
+}
+fetchSolPrice();
+setInterval(fetchSolPrice, 30000); // refresh every 30s
+
+// ══════════════════════════════════════
+// WALLET SYSTEM — Phantom / Solflare / Demo
+// ══════════════════════════════════════
+let phantomPublicKey = null;
+let walletProvider = null;  // 'phantom' | 'solflare' | 'demo'
+let isDemoMode = false;
+
+// ── Provider detection (robust, works on file:// + https://) ──
+function getProvider(type) {
+  // Phantom injects window.phantom.solana AND window.solana
+  if (type === 'phantom') {
+    if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
+    if (window.solana?.isPhantom) return window.solana;
+    return null;
+  }
+  // Solflare injects window.solflare
+  if (type === 'solflare') {
+    if (window.solflare?.isSolflare) return window.solflare;
+    return null;
+  }
+  return null;
+}
+
+// ══════════════════════════════════════
+// SMART MODAL — detects context automatically
+// ══════════════════════════════════════
+
+/*  Contexts:
+    1. Phantom in-app browser  → window.solana injected, isPhantom=true  → auto connect offer
+    2. Solflare in-app browser → window.solflare injected               → auto connect offer
+    3. Desktop browser + extension installed                             → connect button
+    4. Desktop browser, no extension                                     → deep-link + install
+    5. Mobile browser (no in-app)                                        → deep-link to open in app
+*/
+function detectContext() {
+  const hasPhantom  = !!(getProvider('phantom'));
+  const hasSolflare = !!(getProvider('solflare'));
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isInPhantomBrowser  = hasPhantom  && isMobile;   // Phantom injects on its own browser
+  const isInSolflareBrowser = hasSolflare && isMobile;
+  return { hasPhantom, hasSolflare, isMobile, isInPhantomBrowser, isInSolflareBrowser };
+}
+
+function renderWalletModal() {
+  const ctx = detectContext();
+  const body   = document.getElementById('wm-body');
+  const footer = document.getElementById('wm-footer-msg');
+
+  // If already connected → show disconnect
+  if (walletConnected || isDemoMode) {
+    const who = isDemoMode ? '🎮 Demo Mode'
+              : walletProvider === 'phantom' ? '👻 Phantom' : '🔆 Solflare';
+    body.innerHTML = `
+      <div style="text-align:center;padding:20px 0 10px">
+        <div style="font-size:2.5rem;margin-bottom:10px">${isDemoMode ? '🎮' : '👻'}</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:6px">Connected via</div>
+        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:16px">${who}</div>
+        ${!isDemoMode ? `<div style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--purple);background:rgba(168,85,247,0.1);padding:6px 14px;border-radius:8px;display:inline-block;margin-bottom:16px">${shortAddr(phantomPublicKey||'')}</div>` : ''}
+        <div style="font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--green)">◎ ${walletBalance.toFixed(4)}</div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">$${(walletBalance*SOL_USD).toFixed(2)} USD</div>
+      </div>`;
+    footer.innerHTML = `<span style="color:var(--red);cursor:pointer;font-weight:600" onclick="disconnectWallet()">⏏ Disconnect wallet</span>`;
+    return;
+  }
+
+  let html = '';
+
+  // ── SCENARIO 1 & 2: Already in an in-app browser ──
+  if (ctx.isInPhantomBrowser || ctx.isInSolflareBrowser) {
+    const name = ctx.isInPhantomBrowser ? 'Phantom' : 'Solflare';
+    const icon = ctx.isInPhantomBrowser ? '👻' : '🔆';
+    const color = ctx.isInPhantomBrowser ? 'linear-gradient(135deg,#4e44ce,#9945ff)' : 'linear-gradient(135deg,#fc7f1e,#f7931a)';
+    const fn = ctx.isInPhantomBrowser ? 'connectPhantom()' : 'connectSolflare()';
+    html = `
+      <div style="text-align:center;padding:8px 0 4px">
+        <div style="font-size:2rem;margin-bottom:6px">${icon}</div>
+        <div style="font-size:0.78rem;color:var(--green);font-weight:600;margin-bottom:14px">✓ ${name} browser detected</div>
+      </div>
+      <div class="wm-wallet-btn" style="border-color:rgba(168,85,247,0.5);box-shadow:0 0 20px rgba(168,85,247,0.1)" onclick="${fn}">
+        <div class="wm-wallet-logo" style="background:${color}">${icon}</div>
+        <div class="wm-wallet-info">
+          <div class="wm-wallet-name">Connect ${name}</div>
+          <div class="wm-wallet-desc">Tap to approve connection</div>
+        </div>
+        <div class="wm-wallet-badge detected">Ready</div>
+      </div>
+      <div class="wm-divider">or</div>
+      <button class="wm-demo-btn" onclick="connectDemo()">🎮 Demo Mode <span style="font-size:0.62rem;color:var(--muted)">(no real SOL)</span></button>`;
+    footer.innerHTML = `Your wallet is already available in this browser.`;
+
+  // ── SCENARIO 3: Desktop with extension ──
+  } else if (!ctx.isMobile && (ctx.hasPhantom || ctx.hasSolflare)) {
+    if (ctx.hasPhantom) {
+      html += `
+        <div class="wm-wallet-btn" id="wm-phantom-btn" onclick="connectPhantom()">
+          <div class="wm-wallet-logo" style="background:linear-gradient(135deg,#4e44ce,#9945ff)">👻</div>
+          <div class="wm-wallet-info">
+            <div class="wm-wallet-name">Phantom</div>
+            <div class="wm-wallet-desc">Extension detected — click to connect</div>
+          </div>
+          <div class="wm-wallet-badge detected">Detected</div>
+        </div>`;
+    }
+    if (ctx.hasSolflare) {
+      html += `
+        <div class="wm-wallet-btn" onclick="connectSolflare()">
+          <div class="wm-wallet-logo" style="background:linear-gradient(135deg,#fc7f1e,#f7931a)">🔆</div>
+          <div class="wm-wallet-info">
+            <div class="wm-wallet-name">Solflare</div>
+            <div class="wm-wallet-desc">Extension detected — click to connect</div>
+          </div>
+          <div class="wm-wallet-badge detected">Detected</div>
+        </div>`;
+    }
+    html += `<div class="wm-divider">or</div>
+      <button class="wm-demo-btn" onclick="connectDemo()">🎮 Demo Mode <span style="font-size:0.62rem;color:var(--muted)">(no real SOL)</span></button>`;
+    footer.innerHTML = `By connecting you agree to our <a href="#">Terms</a>.`;
+
+  // ── SCENARIO 4 & 5: Mobile without in-app, OR desktop without extension ──
+  } else {
+    const pageUrl = encodeURIComponent(window.location.href);
+    const phantomDeepLink = `https://phantom.app/ul/browse/${pageUrl}?ref=${pageUrl}`;
+    const solflareDeepLink = `https://solflare.com/ul/v1/browse/${pageUrl}?ref=${pageUrl}`;
+
+    if (ctx.isMobile) {
+      // Mobile: deep links to open in wallet's in-app browser
+      html = `
+        <div style="text-align:center;padding:6px 0 12px;font-size:0.78rem;color:var(--muted)">
+          Open this page in your wallet's browser to connect
+        </div>
+        <a href="${phantomDeepLink}" class="wm-wallet-btn" style="text-decoration:none;display:flex">
+          <div class="wm-wallet-logo" style="background:linear-gradient(135deg,#4e44ce,#9945ff)">👻</div>
+          <div class="wm-wallet-info">
+            <div class="wm-wallet-name">Open in Phantom</div>
+            <div class="wm-wallet-desc">Tap to open this page in Phantom app</div>
+          </div>
+          <div class="wm-wallet-badge" style="background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.3);color:var(--purple)">Open →</div>
+        </a>
+        <a href="${solflareDeepLink}" class="wm-wallet-btn" style="text-decoration:none;display:flex;margin-top:0">
+          <div class="wm-wallet-logo" style="background:linear-gradient(135deg,#fc7f1e,#f7931a)">🔆</div>
+          <div class="wm-wallet-info">
+            <div class="wm-wallet-name">Open in Solflare</div>
+            <div class="wm-wallet-desc">Tap to open this page in Solflare app</div>
+          </div>
+          <div class="wm-wallet-badge" style="background:rgba(252,127,30,0.15);border-color:rgba(252,127,30,0.3);color:#f7931a">Open →</div>
+        </a>
+        <div class="wm-divider">or</div>
+        <button class="wm-demo-btn" onclick="connectDemo()">🎮 Demo Mode <span style="font-size:0.62rem;color:var(--muted)">(no real SOL)</span></button>`;
+      footer.innerHTML = `Don't have a wallet? <a href="https://phantom.app" target="_blank">Get Phantom →</a>`;
+    } else {
+      // Desktop: no extension — show install options
+      html = `
+        <div style="text-align:center;padding:6px 0 12px;font-size:0.78rem;color:var(--muted)">
+          No wallet extension detected. Install one to play with real SOL.
+        </div>
+        <div class="wm-wallet-btn" onclick="window.open('https://phantom.app','_blank')" style="opacity:0.85">
+          <div class="wm-wallet-logo" style="background:linear-gradient(135deg,#4e44ce,#9945ff)">👻</div>
+          <div class="wm-wallet-info">
+            <div class="wm-wallet-name">Phantom</div>
+            <div class="wm-wallet-desc">Install extension, then refresh this page</div>
+          </div>
+          <div class="wm-wallet-badge" style="color:var(--muted);border-color:var(--border)">Install →</div>
+        </div>
+        <div class="wm-wallet-btn" onclick="window.open('https://solflare.com','_blank')" style="opacity:0.85">
+          <div class="wm-wallet-logo" style="background:linear-gradient(135deg,#fc7f1e,#f7931a)">🔆</div>
+          <div class="wm-wallet-info">
+            <div class="wm-wallet-name">Solflare</div>
+            <div class="wm-wallet-desc">Install extension, then refresh this page</div>
+          </div>
+          <div class="wm-wallet-badge" style="color:var(--muted);border-color:var(--border)">Install →</div>
+        </div>
+        <div class="wm-divider">or</div>
+        <button class="wm-demo-btn" onclick="connectDemo()">🎮 Demo Mode <span style="font-size:0.62rem;color:var(--muted)">(no real SOL)</span></button>`;
+      footer.innerHTML = `After installing, <a href="javascript:location.reload()">refresh this page</a> and try again.`;
+    }
+  }
+
+  body.innerHTML = html;
+}
+
+function openWalletModal() {
+  renderWalletModal();
+  document.getElementById('wallet-modal-overlay').style.display = 'flex';
+}
+
+function closeWalletModal() {
+  document.getElementById('wallet-modal-overlay').style.display = 'none';
+}
+
+// Keep detectWallets as alias for backward compat
+function detectWallets() { renderWalletModal(); }
+
+// ── Connect Phantom ──
+async function connectPhantom() {
+  const provider = getProvider('phantom');
+  if (!provider) {
+    window.open('https://phantom.app/', '_blank');
+    return;
+  }
+  await doConnect(provider, 'phantom');
+}
+
+// ── Connect Solflare ──
+async function connectSolflare() {
+  const provider = getProvider('solflare');
+  if (!provider) {
+    window.open('https://solflare.com/', '_blank');
+    return;
+  }
+  await doConnect(provider, 'solflare');
+}
+
+// ── Shared connect flow ──
+async function doConnect(provider, type) {
+  const phantomBtn = document.getElementById('wm-phantom-btn');
+  const solflareBtn = document.getElementById('wm-solflare-btn');
+  phantomBtn.style.pointerEvents = 'none';
+  solflareBtn.style.pointerEvents = 'none';
+
+  const desc = document.getElementById(type === 'phantom' ? 'phantom-desc' : 'solflare-desc');
+  desc.textContent = 'Waiting for approval...';
+
+  try {
+    let pubKey;
+    if (type === 'phantom') {
+      const resp = await provider.connect();
+      pubKey = resp.publicKey.toString();
+    } else {
+      // Solflare connect
+      await provider.connect();
+      pubKey = provider.publicKey.toString();
+    }
+
+    phantomPublicKey = pubKey;
+    walletProvider = type;
+    isDemoMode = false;
+
+    // Fetch real balance
+    await fetchOnChainBalance(pubKey);
+
+    walletConnected = true;
+    closeWalletModal();
+    applyConnectedUI(pubKey, type);
+
+    // Events
+    provider.on('accountChanged', async (newPub) => {
+      if (newPub) {
+        phantomPublicKey = newPub.toString();
+        await fetchOnChainBalance(phantomPublicKey);
+        const short = shortAddr(phantomPublicKey);
+        document.getElementById('addr-text').textContent = short;
+        updateWalletDisplay();
+      } else {
+        disconnectWallet();
+      }
+    });
+    provider.on('disconnect', () => disconnectWallet());
+
+  } catch (err) {
+    desc.textContent = err.code === 4001 ? 'Rejected by user' : 'Connection failed';
+    setTimeout(() => detectWallets(), 2000);
+    console.error('Connect error:', err);
+  } finally {
+    phantomBtn.style.pointerEvents = '';
+    solflareBtn.style.pointerEvents = '';
+  }
+}
+
+// ── Demo mode ──
+function connectDemo() {
+  isDemoMode = true;
+  walletConnected = true;
+  walletProvider = 'demo';
+  walletBalance = 5.0;  // demo balance
+  closeWalletModal();
+
+  document.getElementById('btn-connect').style.display = 'none';
+  document.getElementById('addr-chip').style.display = 'none';
+  document.getElementById('demo-badge').style.display = 'flex';
+  document.getElementById('sol-balance-display').style.display = 'flex';
+
+  updateWalletDisplay();
+  updateBetUSD();
+
+  document.getElementById('pp-big-avatar').textContent = '🎮';
+  document.getElementById('profile-avatar').textContent = '🎮';
+  document.getElementById('pp-username').textContent = 'Demo Player';
+  document.getElementById('profile-btn-info').style.display = 'flex';
+}
+
+// ── Apply UI after real wallet connect ──
+function applyConnectedUI(pubKey, type) {
+  const short = shortAddr(pubKey);
+  const icon = type === 'phantom' ? '👻' : '🔆';
+
+  document.getElementById('btn-connect').style.display = 'none';
+  document.getElementById('addr-chip').style.display = 'flex';
+  document.getElementById('addr-text').textContent = short;
+  document.getElementById('sol-balance-display').style.display = 'flex';
+
+  updateWalletDisplay();
+  updateBetUSD();
+
+  document.getElementById('pp-big-avatar').textContent = icon;
+  document.getElementById('profile-avatar').textContent = icon;
+  document.getElementById('pp-username').textContent = short;
+  document.getElementById('profile-btn-info').style.display = 'flex';
+}
+
+// ── Fetch real on-chain balance via JSON-RPC ──
+async function fetchOnChainBalance(pubKey) {
+  // Try multiple public RPC endpoints
+  const endpoints = [
+    'https://api.mainnet-beta.solana.com',
+    'https://solana-mainnet.g.alchemy.com/v2/demo',
+    'https://rpc.ankr.com/solana',
+  ];
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0', id: 1,
+          method: 'getBalance',
+          params: [pubKey, { commitment: 'confirmed' }]
+        })
+      });
+      const d = await res.json();
+      if (d.result?.value != null) {
+        walletBalance = d.result.value / 1_000_000_000;
+        return;
+      }
+    } catch(_) {}
+  }
+  walletBalance = 0;
+}
+
+// ── Disconnect ──
+function disconnectWallet() {
+  closeWalletModal();
+  if (walletProvider && walletProvider !== 'demo') {
+    const p = getProvider(walletProvider);
+    if (p) p.disconnect().catch(() => {});
+  }
+  phantomPublicKey = null;
+  walletProvider = null;
+  isDemoMode = false;
+  walletConnected = false;
+  walletBalance = 0;
+
+  document.getElementById('btn-connect').style.display = 'flex';
+  document.getElementById('addr-chip').style.display = 'none';
+  document.getElementById('demo-badge').style.display = 'none';
+  document.getElementById('sol-balance-display').style.display = 'none';
+  document.getElementById('profile-avatar').textContent = '?';
+  document.getElementById('profile-btn-info').style.display = 'none';
+  updateBetUSD();
+}
+
+// ── Helpers ──
+function shortAddr(addr) {
+  return addr.slice(0, 4) + '…' + addr.slice(-4);
+}
+
+// ── Auto-connect on page load (trusted/remembered connections) ──
+// Phantom extension can take ~200ms to inject — poll briefly
+let _autoConnectTries = 0;
+function tryAutoConnect() {
+  _autoConnectTries++;
+  const phantom = getProvider('phantom');
+  if (phantom) {
+    phantom.connect({ onlyIfTrusted: true })
+      .then(async resp => {
+        if (resp?.publicKey) {
+          phantomPublicKey = resp.publicKey.toString();
+          walletProvider = 'phantom';
+          walletConnected = true;
+          isDemoMode = false;
+          await fetchOnChainBalance(phantomPublicKey);
+          applyConnectedUI(phantomPublicKey, 'phantom');
+          // events
+          phantom.on('accountChanged', async pk => {
+            if (pk) { phantomPublicKey = pk.toString(); await fetchOnChainBalance(phantomPublicKey); updateWalletDisplay(); }
+            else disconnectWallet();
+          });
+          phantom.on('disconnect', () => disconnectWallet());
+          console.log('✅ Auto-reconnected Phantom:', phantomPublicKey);
+        }
+      })
+      .catch(() => {/* not trusted, fine */});
+
+    const solflare = getProvider('solflare');
+    if (solflare && !walletConnected) {
+      solflare.connect({ onlyIfTrusted: true })
+        .then(async () => {
+          if (solflare.publicKey && !walletConnected) {
+            phantomPublicKey = solflare.publicKey.toString();
+            walletProvider = 'solflare';
+            walletConnected = true;
+            isDemoMode = false;
+            await fetchOnChainBalance(phantomPublicKey);
+            applyConnectedUI(phantomPublicKey, 'solflare');
+          }
+        })
+        .catch(() => {});
+    }
+    return; // found phantom, stop polling
+  }
+  // Retry up to 10 times with 200ms gaps
+  if (_autoConnectTries < 10) setTimeout(tryAutoConnect, 200);
+}
+setTimeout(tryAutoConnect, 100);
+
+function updateWalletDisplay() {
+  document.getElementById('wallet-sol').textContent = walletBalance.toFixed(3);
+  const usdVal = SOL_USD > 0 ? `$${(walletBalance * SOL_USD).toFixed(2)}` : '—';
+  document.getElementById('wallet-usd').textContent = usdVal;
+}
+
+function updateBetUSD() {
+  const val = parseFloat(document.getElementById('bet-amount').value) || 0;
+  currentBet = val;
+  document.getElementById('bet-usd-val').textContent = `≈ $${(val * SOL_USD).toFixed(2)}`;
+  document.getElementById('bet-usd-label').textContent = `($${(val * SOL_USD).toFixed(2)})`;
+}
+
+function setBet(val, mode) {
+  const inp = document.getElementById('bet-amount');
+  if (mode === 'x2') {
+    inp.value = Math.min(10, parseFloat(inp.value) * 2).toFixed(2);
+  } else if (mode === 'max') {
+    inp.value = Math.min(10, walletBalance).toFixed(2);
+  } else {
+    inp.value = Math.max(0.01, parseFloat(inp.value) * val).toFixed(2);
+  }
+  updateBetUSD();
+}
+
+function placeBet() {
+  const bet = parseFloat(document.getElementById('bet-amount').value) || 0;
+  if (bet < 0.01) { alert('Minimum bet is 0.01 SOL'); return; }
+  if (!(walletConnected || isDemoMode)) { alert('Connect your wallet first!'); return; }
+  if (bet > walletBalance) {
+    alert('Insufficient balance!\nYou have ' + walletBalance.toFixed(3) + ' SOL but tried to bet ' + bet.toFixed(3) + ' SOL');
+    return;
+  }
+
+  gameBet = bet;
+  // Deduct from displayed balance
+  walletBalance = Math.max(0, walletBalance - bet);
+  updateWalletDisplay();
+
+  document.getElementById('p1-status').textContent = 'YOU';
+  document.getElementById('p1-status').style.color = 'var(--green)';
+  document.getElementById('p2-status').textContent = 'WAITING...';
+  document.getElementById('p2-status').style.color = 'var(--yellow)';
+  document.getElementById('btn-place-bet').disabled = true;
+  document.getElementById('btn-place-bet').textContent = 'Creating Room...';
+  document.getElementById('p1-bet-display').textContent = '◎ ' + bet.toFixed(2);
+  document.getElementById('p2-bet-display').textContent = '◎ ' + bet.toFixed(2);
+
+  // Connect to WS and create room
+  connectWS();
+  const walletAddr = phantomPublicKey || ('demo_' + Math.random().toString(36).slice(2, 10));
+  const doCreate = () => wsSend({ type: 'create_room', bet, walletAddress: walletAddr });
+  if (wsReady) doCreate();
+  else pendingAction = doCreate;
+}
+
+// Reset bet panel
+function resetBetPanel() {
+  document.getElementById('p1-status').textContent = 'WAITING';
+  document.getElementById('p1-status').style.color = '';
+  document.getElementById('p2-status').textContent = '—';
+  document.getElementById('p2-status').style.color = 'var(--muted)';
+  document.getElementById('btn-place-bet').disabled = false;
+  document.getElementById('btn-place-bet').textContent = 'Place Bet & Start';
+}
+
+// Score bar
+const recentResults = [];
+function addScoreBar(p1, p2) {
+  const winner = p1 > p2 ? p1 : p2;
+  recentResults.unshift(winner);
+  if (recentResults.length > 10) recentResults.pop();
+  renderScoreBar();
+}
+
+function renderScoreBar() {
+  const bar = document.getElementById('score-bar');
+  bar.innerHTML = '<span style="font-size:0.68rem;color:var(--muted);margin-right:4px;">Recent:</span>';
+  recentResults.forEach(s => {
+    const cls = s >= 20 ? 'mult-purple' : s >= 10 ? 'mult-green' : s >= 5 ? 'mult-yellow' : 'mult-red';
+    const chip = document.createElement('span');
+    chip.className = `mult-chip ${cls}`;
+    chip.textContent = `${s} pts`;
+    bar.appendChild(chip);
+  });
+}
+
+// ══════════════════════════════════════
+// GLOBAL CHAT
+// ══════════════════════════════════════
+const CHAT_COLORS = ['#a855f7','#22d3ee','#22c55e','#eab308','#f43f5e','#fb923c'];
+const BOT_NAMES = ['kosher','TOTA','NOVASOL','CYCLOPS','BCH','cryptobro','hexwizard'];
+const BOT_MSGS = [
+  'lets gooo 🎯','nice shot!','GG','bubble master 🫧','P1 is popping off','P2 claps back hard',
+  'who tf is winning','this game is fire 🔥','my bubbles my rules','that chain drop tho',
+  'gg wp','another round?','i need more SOL for this','how do u aim','just click bro lmao',
+  'first time here?','hexshot is underrated','P2 carried fr','let\'s gooo','clean shot!'
+];
+
+let globalMsgs = [];
+let myName = 'You';
+let myColor = CHAT_COLORS[Math.floor(Math.random() * CHAT_COLORS.length)];
+
+function addGlobalMsg(name, text, color, isMe) {
+  globalMsgs.push({ name, text, color, isMe });
+  if (globalMsgs.length > 60) globalMsgs.shift();
+  renderGlobalChat();
+}
+
+function renderGlobalChat() {
+  const el = document.getElementById('global-messages');
+  el.innerHTML = '';
+  globalMsgs.forEach(m => {
+    const row = document.createElement('div');
+    row.className = 'chat-msg';
+    const initials = m.name.slice(0, 2).toUpperCase();
+    row.innerHTML = `
+      <div class="chat-avatar" style="background:${m.color}22;color:${m.color}">${initials}</div>
+      <div class="chat-msg-body">
+        <div class="chat-msg-name" style="color:${m.color}">${m.name}</div>
+        <div class="chat-msg-text">${escHtml(m.text)}</div>
+      </div>`;
+    el.appendChild(row);
+  });
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendGlobalMsg() {
+  const inp = document.getElementById('global-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  addGlobalMsg(myName, text, myColor, true);
+  inp.value = '';
+  // bot reply sometimes
+  if (Math.random() < 0.4) {
+    setTimeout(() => botGlobalMsg(), 800 + Math.random() * 2000);
+  }
+}
+
+function botGlobalMsg() {
+  const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+  const text = BOT_MSGS[Math.floor(Math.random() * BOT_MSGS.length)];
+  const color = CHAT_COLORS[Math.floor(Math.random() * CHAT_COLORS.length)];
+  addGlobalMsg(name, text, color, false);
+}
+
+// Seed chat with some messages
+setTimeout(() => {
+  addGlobalMsg('kosher', 'Give 500x', '#a855f7');
+  addGlobalMsg('NOVASOL', 'Kosherr good luckkk', '#22d3ee');
+  addGlobalMsg('CYCLOPS', "don't forget me bro", '#22c55e');
+  addGlobalMsg('BCH', 'just joined!', '#eab308');
+}, 200);
+
+// Random bot messages
+setInterval(() => {
+  if (Math.random() < 0.3) botGlobalMsg();
+}, 5000);
+
+// Online count fluctuation
+setInterval(() => {
+  const n = 240 + Math.floor(Math.random() * 60);
+  document.getElementById('online-count').textContent = `${n} online`;
+}, 10000);
+
+// ══════════════════════════════════════
+// IN-GAME PRIVATE CHAT
+// ══════════════════════════════════════
+let gameMsgs = [];
+
+function addGameMsg(name, text, color) {
+  gameMsgs.push({ name, text, color });
+  if (gameMsgs.length > 80) gameMsgs.shift();
+  renderGameChat();
+}
+
+function renderGameChat() {
+  const el = document.getElementById('game-messages');
+  el.innerHTML = '';
+  gameMsgs.forEach(m => {
+    const row = document.createElement('div');
+    row.className = 'chat-msg';
+    const initials = m.name.slice(0, 2).toUpperCase();
+    row.innerHTML = `
+      <div class="chat-avatar" style="background:${m.color}22;color:${m.color};font-size:0.65rem">${initials}</div>
+      <div class="chat-msg-body">
+        <div class="chat-msg-name" style="color:${m.color};font-size:0.66rem">${m.name}</div>
+        <div class="chat-msg-text" style="font-size:0.72rem">${escHtml(m.text)}</div>
+      </div>`;
+    el.appendChild(row);
+  });
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendGameMsg() {
+  const inp = document.getElementById('game-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  // determine which player is "you"
+  const name = currentPlayer === 0 ? 'Player 1' : 'Player 2';
+  const color = currentPlayer === 0 ? '#22d3ee' : '#f43f5e';
+  addGameMsg(name, text, color);
+  inp.value = '';
+  // opponent auto-reply sometimes
+  if (Math.random() < 0.35) {
+    setTimeout(() => {
+      const replies = ['nice one!', 'ur going down 😤', 'gg', 'how lol', 'omg', 'lucky shot', '😭', 'WAIT', 'no way', 'letsgoo'];
+      const oppName = currentPlayer === 0 ? 'Player 2' : 'Player 1';
+      const oppColor = currentPlayer === 0 ? '#f43f5e' : '#22d3ee';
+      addGameMsg(oppName, replies[Math.floor(Math.random() * replies.length)], oppColor);
+    }, 600 + Math.random() * 1800);
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════
+// GAME CONSTANTS
+// ══════════════════════════════════════
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+const R = 21;
+const ROWS = 9;
+const COLS = 10;
+const COLORS = ['#ff3366','#22d3ee','#4ade80','#fbbf24','#a855f7','#fb923c'];
+const CANNON_Y = H - 30;
+const CANNON_X = W / 2;
+const GAME_DURATION = 4 * 60;
+
+let grid = [];
+let currentPlayer = 0;
+let scores = [0, 0];
+let bubbles = [null, null];
+let nextBubbles = [null, null];
+let projectile = null;
+let shooting = false;
+let animId = null;
+let popParticles = [];
+let msgTimer = null;
+let cannonAngle = -Math.PI / 2;
+let gameActive = false;
+let timeLeft = GAME_DURATION;
+let timerInterval = null;
+
+// ══════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════
+function startTimer() {
+  timeLeft = GAME_DURATION;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) { clearInterval(timerInterval); endGame('time'); }
+  }, 1000);
+}
+
+function stopTimer() { clearInterval(timerInterval); }
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timer-display');
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  el.classList.toggle('urgent', timeLeft <= 30);
+}
+
+// ══════════════════════════════════════
+// HEX GEOMETRY
+// ══════════════════════════════════════
+function hexX(col, row) { return R + col * R * 2 + (row % 2) * R; }
+function hexY(row) { return R + row * R * 1.73; }
+
+// ══════════════════════════════════════
+// GRID INIT
+// ══════════════════════════════════════
+function initGrid() {
+  grid = [];
+  for (let r = 0; r < ROWS; r++) {
+    grid[r] = [];
+    const cols = r % 2 === 0 ? COLS : COLS - 1;
+    for (let c = 0; c < cols; c++)
+      grid[r][c] = (r < 5) ? COLORS[Math.floor(Math.random() * COLORS.length)] : null;
+  }
+}
+
+function randomColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
+
+function initBubbles() {
+  for (let p = 0; p < 2; p++) {
+    bubbles[p] = randomColor();
+    nextBubbles[p] = randomColor();
+    drawNextBubble(p);
+  }
+}
+
+function drawNextBubble(player) {
+  const c = document.getElementById(`next-p${player+1}`);
+  const cx = c.getContext('2d');
+  cx.clearRect(0, 0, 34, 34);
+  drawBubbleOn(cx, 17, 17, 14, nextBubbles[player]);
+}
+
+// ══════════════════════════════════════
+// DRAWING
+// ══════════════════════════════════════
+function lightenColor(hex, amt) {
+  const n = parseInt(hex.replace('#',''), 16);
+  return `rgb(${Math.min(255,(n>>16)+amt)},${Math.min(255,((n>>8)&0xff)+amt)},${Math.min(255,(n&0xff)+amt)})`;
+}
+
+function drawBubbleOn(c2, x, y, r, color) {
+  c2.beginPath(); c2.arc(x, y, r, 0, Math.PI*2);
+  const g = c2.createRadialGradient(x-r*0.3, y-r*0.3, r*0.05, x, y, r);
+  g.addColorStop(0, lightenColor(color, 60));
+  g.addColorStop(1, color);
+  c2.fillStyle = g; c2.fill();
+  c2.strokeStyle = 'rgba(255,255,255,0.18)'; c2.lineWidth = 1.5; c2.stroke();
+  c2.beginPath(); c2.arc(x-r*0.27, y-r*0.27, r*0.19, 0, Math.PI*2);
+  c2.fillStyle = 'rgba(255,255,255,0.28)'; c2.fill();
+}
+
+function hexPath(c2, x, y, r) {
+  c2.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI/180*(60*i-30);
+    i===0 ? c2.moveTo(x+r*Math.cos(a), y+r*Math.sin(a)) : c2.lineTo(x+r*Math.cos(a), y+r*Math.sin(a));
+  }
+  c2.closePath();
+}
+
+function drawBackground() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0b0b18'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(42,42,64,0.7)'; ctx.lineWidth = 0.5;
+  for (let r = 0; r < ROWS; r++) {
+    const cols = r%2===0 ? COLS : COLS-1;
+    for (let c = 0; c < cols; c++) { hexPath(ctx, hexX(c,r), hexY(r), R-1); ctx.stroke(); }
+  }
+  ctx.strokeStyle = 'rgba(42,42,64,0.9)'; ctx.lineWidth = 1;
+  ctx.setLineDash([4, 8]);
+  ctx.beginPath(); ctx.moveTo(0, H-68); ctx.lineTo(W, H-68); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawGrid() {
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < grid[r].length; c++)
+      if (grid[r][c]) drawBubbleOn(ctx, hexX(c,r), hexY(r), R-1, grid[r][c]);
+}
+
+function drawCannon() {
+  const color = currentPlayer===0 ? '#22d3ee' : '#f43f5e';
+  ctx.save();
+  ctx.translate(CANNON_X, CANNON_Y);
+  ctx.beginPath(); ctx.arc(0, 0, 19, 0, Math.PI*2);
+  ctx.fillStyle = currentPlayer===0 ? 'rgba(34,211,238,0.12)' : 'rgba(244,63,94,0.12)';
+  ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+  ctx.rotate(cannonAngle + Math.PI/2);
+  ctx.beginPath(); ctx.roundRect(-5, -40, 10, 42, 3);
+  ctx.fillStyle = color; ctx.fill();
+  ctx.restore();
+  drawBubbleOn(ctx, CANNON_X, CANNON_Y, R-2, bubbles[currentPlayer]);
+  ctx.save();
+  ctx.setLineDash([4, 9]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(CANNON_X, CANNON_Y);
+  ctx.lineTo(CANNON_X + Math.cos(cannonAngle)*200, CANNON_Y + Math.sin(cannonAngle)*200);
+  ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+}
+
+function drawProjectile() {
+  if (!projectile) return;
+  drawBubbleOn(ctx, projectile.x, projectile.y, R-1, projectile.color);
+}
+
+function drawParticles() {
+  for (let i = popParticles.length-1; i >= 0; i--) {
+    const p = popParticles[i];
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life-=0.028;
+    if (p.life<=0) { popParticles.splice(i,1); continue; }
+    ctx.globalAlpha=p.life;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);
+    ctx.fillStyle=p.color; ctx.fill(); ctx.globalAlpha=1;
+  }
+}
+
+function render() {
+  drawBackground(); drawGrid(); drawParticles(); drawCannon();
+  if (projectile) drawProjectile();
+  if (popParticles.length>0 && !projectile && !shooting) requestAnimationFrame(render);
+}
+
+// ══════════════════════════════════════
+// INPUT
+// ══════════════════════════════════════
+canvas.addEventListener('mousemove', (e) => {
+  if (shooting || !gameActive) return;
+  const rect = canvas.getBoundingClientRect();
+  const dx = (e.clientX-rect.left)-CANNON_X;
+  const dy = (e.clientY-rect.top)-CANNON_Y;
+  const MIN = 0.17;
+  let a = Math.atan2(dy, dx);
+  if (dy >= 0) { a = dx >= 0 ? -MIN : -(Math.PI-MIN); }
+  else { if (a>-MIN) a=-MIN; if (a<-(Math.PI-MIN)) a=-(Math.PI-MIN); }
+  cannonAngle = a;
+  render();
+});
+
+canvas.addEventListener('click', () => { if (!shooting && gameActive && currentPlayer === myPlayerIdx) shoot(); });
+
+// ══════════════════════════════════════
+// SHOOTING
+// ══════════════════════════════════════
+function shoot() {
+  // Only fire if it's our turn
+  if (currentPlayer !== myPlayerIdx) { showMsg("Not your turn!"); return; }
+  shooting = true;
+  projectile = {
+    x: CANNON_X, y: CANNON_Y,
+    vx: Math.cos(cannonAngle)*9,
+    vy: Math.sin(cannonAngle)*9,
+    color: bubbles[currentPlayer]
+  };
+  gameLoop();
+}
+
+function gameLoop() {
+  if (!projectile) return;
+  update(); render();
+  animId = requestAnimationFrame(gameLoop);
+}
+
+let landX = CANNON_X, landY = 100; // track landing position for server
+function update() {
+  if (!projectile) return;
+  projectile.x += projectile.vx; projectile.y += projectile.vy;
+  if (projectile.x-R<0) { projectile.x=R; projectile.vx*=-1; }
+  if (projectile.x+R>W) { projectile.x=W-R; projectile.vx*=-1; }
+  if (projectile.y-R<0) { landX=projectile.x; landY=projectile.y; projectile.y=R; placeAndNotify(); return; }
+  if (checkCollision()) { landX=projectile.x; landY=projectile.y; placeAndNotify(); return; }
+  if (projectile.y>H+50) { cancelAnimationFrame(animId); projectile=null; shooting=false; }
+}
+
+function placeAndNotify() {
+  cancelAnimationFrame(animId);
+  // Send to server
+  wsSend({ type: 'shoot', landX: Math.round(landX), landY: Math.round(landY) });
+  projectile = null;
+  // Server will respond with shot_result
+}
+
+function checkCollision() {
+  for (let r=0; r<ROWS; r++)
+    for (let c=0; c<grid[r].length; c++)
+      if (grid[r][c] && Math.hypot(projectile.x-hexX(c,r), projectile.y-hexY(r))<R*1.9) return true;
+  return false;
+}
+
+// ══════════════════════════════════════
+// PLACEMENT
+// ══════════════════════════════════════
+// placeProjectile replaced by placeAndNotify (server-authoritative)
+function placeProjectile() { placeAndNotify(); }
+
+function getNeighbors(r, c) {
+  const dirs = (r%2===0)
+    ? [[-1,0],[-1,-1],[0,-1],[0,1],[1,0],[1,-1]]
+    : [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]];
+  return dirs.map(([dr,dc])=>[r+dr,c+dc]).filter(([nr,nc])=>nr>=0&&nr<ROWS&&nc>=0&&grid[nr]&&nc<grid[nr].length);
+}
+
+function findGroup(startR, startC, color) {
+  const visited=new Set(), group=[], queue=[{r:startR,c:startC}];
+  while(queue.length) {
+    const {r,c}=queue.shift(), key=`${r},${c}`;
+    if(visited.has(key)) continue; visited.add(key);
+    if(r<0||r>=ROWS||c<0||c>=grid[r].length||grid[r][c]!==color) continue;
+    group.push({r,c});
+    for(const [nr,nc] of getNeighbors(r,c)) if(!visited.has(`${nr},${nc}`)) queue.push({r:nr,c:nc});
+  }
+  return group;
+}
+
+function removeFloating() {
+  const connected=new Set(), queue=[];
+  for(let c=0;c<grid[0].length;c++) if(grid[0][c]) { queue.push({r:0,c}); connected.add(`0,${c}`); }
+  while(queue.length) {
+    const {r,c}=queue.shift();
+    for(const [nr,nc] of getNeighbors(r,c)) {
+      const key=`${nr},${nc}`;
+      if(!connected.has(key)&&grid[nr][nc]) { connected.add(key); queue.push({r:nr,c:nc}); }
+    }
+  }
+  let count=0;
+  for(let r=1;r<ROWS;r++) for(let c=0;c<grid[r].length;c++)
+    if(grid[r][c]&&!connected.has(`${r},${c}`)) { spawnParticles(hexX(c,r),hexY(r),grid[r][c]); grid[r][c]=null; count++; }
+  return count;
+}
+
+function isGridEmpty() {
+  for(let r=0;r<ROWS;r++) for(let c=0;c<grid[r].length;c++) if(grid[r][c]) return false;
+  return true;
+}
+
+function spawnParticles(x,y,color) {
+  for(let i=0;i<12;i++) {
+    const a=Math.random()*Math.PI*2, spd=1+Math.random()*3;
+    popParticles.push({x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1,r:3+Math.random()*5,color,life:0.8+Math.random()*0.2});
+  }
+}
+
+// ══════════════════════════════════════
+// UI
+// ══════════════════════════════════════
+function switchPlayer() { currentPlayer=1-currentPlayer; updatePanels(); }
+
+function updatePanels() {
+  document.getElementById('panel-p1').className='player-panel'+(currentPlayer===0?' active-p1':'');
+  document.getElementById('panel-p2').className='player-panel'+(currentPlayer===1?' active-p2':'');
+}
+
+function updateScoreDisplay() {
+  document.getElementById('score-p1').textContent=scores[0];
+  document.getElementById('score-p2').textContent=scores[1];
+}
+
+function showMsg(text) {
+  document.getElementById('msg').textContent=text;
+  if(msgTimer) clearTimeout(msgTimer);
+  msgTimer=setTimeout(()=>{document.getElementById('msg').textContent='';},1800);
+}
+
+// ══════════════════════════════════════
+// GAME LIFECYCLE
+// ══════════════════════════════════════
+function startGame() { startGameLocal(); } // kept for compat
+
+function startGameLocal() {
+  scores=[0,0]; shooting=false; projectile=null;
+  popParticles=[]; cannonAngle=-Math.PI/2; gameActive=true;
+  gameMsgs=[];
+  if(animId) cancelAnimationFrame(animId);
+  // Grid/bubbles set by server; just init display
+  for(let p=0;p<2;p++) drawNextBubble(p);
+  updateScoreDisplay(); updatePanels();
+  render();
+  // Game chat seeded by real chat
+  const myName = myPlayerIdx===0 ? 'You (P1)' : 'You (P2)';
+  const myColor = myPlayerIdx===0 ? '#22d3ee' : '#f43f5e';
+  setTimeout(()=>addGameMsg(myName,'gl hf! 🎯',myColor), 600);
+}
+
+function stopGame() {
+  gameActive=false; stopTimer();
+  if(animId) cancelAnimationFrame(animId);
+  projectile=null; shooting=false;
+  resetBetPanel();
+}
+
+// endGame is now handled server-side via handleServerMsg game_end
+function endGame(reason) { /* server-authoritative; see endGameFromServer */ }
+
+function toggleProfile() {
+  profileOpen ? closeProfile() : openProfile();
+}
+
+function openProfile() {
+  profileOpen = true;
+  document.getElementById('profile-overlay').style.display = 'flex';
+  document.getElementById('profile-btn').classList.add('open');
+  refreshProfile();
+}
+
+function closeProfile() {
+  profileOpen = false;
+  document.getElementById('profile-overlay').style.display = 'none';
+  document.getElementById('profile-btn').classList.remove('open');
+}
+
+function getConnectedName() {
+  return walletConnected ? 'Player' : 'Guest';
+}
+
+function getRank(games) {
+  let rank = RANKS[0];
+  for (const r of RANKS) { if (games >= r.minGames) rank = r; }
+  return rank;
+}
+
+function getNextRank(games) {
+  for (const r of RANKS) { if (games < r.minGames) return r; }
+  return null;
+}
+
+function getLevelXP() {
+  // 10 XP per game played + 20 XP per win
+  const xp = profileStats.gamesPlayed * 10 + profileStats.wins * 20;
+  const level = Math.floor(xp / 100) + 1;
+  const xpInLevel = xp % 100;
+  return { xp, level, xpInLevel, xpToNext: 100 };
+}
+
+function refreshProfile() {
+  const name = getConnectedName();
+  const { level, xpInLevel, xpToNext } = getLevelXP();
+  const rank = getRank(profileStats.gamesPlayed);
+  const nextRank = getNextRank(profileStats.gamesPlayed);
+
+  // Header
+  document.getElementById('pp-big-avatar').textContent = walletConnected ? '🧑' : '👤';
+  document.getElementById('pp-username').textContent = walletConnected ? 'Player_' + Math.floor(walletBalance * 100).toString().slice(-4).padStart(4,'0') : 'Guest';
+  document.getElementById('pp-level-num').textContent = level;
+  document.getElementById('pp-xp-txt').textContent = `${xpInLevel} / ${xpToNext} XP`;
+  document.getElementById('pp-level-bar').style.width = (xpInLevel / xpToNext * 100) + '%';
+
+  // Profile button mini
+  document.getElementById('profile-btn-info').style.display = walletConnected ? 'flex' : 'none';
+  document.getElementById('profile-btn-level').textContent = level;
+  document.getElementById('profile-avatar').textContent = walletConnected ? '🧑' : '?';
+
+  // Rank
+  document.getElementById('pp-rank-icon').textContent = rank.icon;
+  document.getElementById('pp-rank-title').textContent = rank.name;
+  document.getElementById('pp-rank-title').style.color = rank.color;
+  if (nextRank) {
+    document.getElementById('pp-rank-next').textContent = `${nextRank.icon} ${nextRank.name} · ${nextRank.minGames - profileStats.gamesPlayed} games away`;
+  } else {
+    document.getElementById('pp-rank-next').textContent = '👑 Max Rank!';
+    document.getElementById('pp-rank-next').style.color = '#f43f5e';
+  }
+
+  // Stats
+  renderStats();
+  renderHistory();
+  renderAchievements();
+}
+
+function renderStats() {
+  const s = profileStats;
+  document.getElementById('stat-games').textContent = s.gamesPlayed;
+  document.getElementById('stat-wins').textContent = s.wins;
+  document.getElementById('stat-losses').textContent = s.losses;
+  document.getElementById('stat-draws').textContent = s.draws;
+
+  document.getElementById('stat-wagered').textContent = s.totalWagered.toFixed(3);
+  document.getElementById('stat-wagered-usd').textContent = `$${(s.totalWagered * SOL_USD).toFixed(2)}`;
+  document.getElementById('stat-won').textContent = s.totalWon.toFixed(3);
+  document.getElementById('stat-won-usd').textContent = `$${(s.totalWon * SOL_USD).toFixed(2)}`;
+
+  const profit = s.netProfit;
+  const profitEl = document.getElementById('stat-profit');
+  const profitWrap = document.getElementById('stat-profit-wrap');
+  profitEl.textContent = (profit >= 0 ? '+' : '') + profit.toFixed(3);
+  profitEl.className = profit >= 0 ? 'profit-pos' : 'profit-neg';
+  document.getElementById('stat-profit-usd').textContent = `$${(Math.abs(profit) * SOL_USD).toFixed(2)}`;
+  document.getElementById('stat-profit-usd').className = 'pp-sol-usd ' + (profit >= 0 ? 'profit-pos' : 'profit-neg');
+
+  const wr = s.gamesPlayed > 0 ? ((s.wins / s.gamesPlayed) * 100).toFixed(1) + '%' : '—';
+  document.getElementById('stat-winrate').textContent = wr;
+  document.getElementById('stat-best-score').textContent = s.bestScore > 0 ? s.bestScore + ' pts' : '—';
+  document.getElementById('stat-avg-score').textContent = s.gamesPlayed > 0 ? Math.round(s.totalScore / s.gamesPlayed) + ' pts' : '—';
+  document.getElementById('stat-biggest-win').textContent = s.totalWon > 0 ? '◎ ' + s.totalWon.toFixed(3) : '—';
+  document.getElementById('stat-streak').textContent = s.longestStreak > 0 ? s.longestStreak + ' wins' : '—';
+  document.getElementById('stat-bubbles').textContent = s.bubblesPopped;
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (profileStats.gameHistory.length === 0) {
+    el.innerHTML = '<div class="pp-history-empty">No games played yet.<br>Place a bet and start your first game!</div>';
+    return;
+  }
+  el.innerHTML = '';
+  [...profileStats.gameHistory].reverse().forEach(g => {
+    const item = document.createElement('div');
+    item.className = 'pp-history-item';
+    const resultClass = g.result === 'win' ? 'phi-win' : g.result === 'loss' ? 'phi-loss' : g.result === 'forfeit_win' ? 'phi-forfeit' : 'phi-draw';
+    const resultEmoji = g.result === 'win' ? '🏆' : g.result === 'loss' ? '💀' : g.result === 'forfeit_win' ? '🚪' : '🤝';
+    const resultLabel = g.result === 'win' ? 'WIN' : g.result === 'loss' ? 'LOSS' : g.result === 'forfeit_win' ? 'FORFEIT WIN' : 'DRAW';
+    const solClass = g.solChange > 0 ? 'phi-pos' : g.solChange < 0 ? 'phi-neg' : 'phi-neu';
+    const solStr = g.bet > 0 ? (g.solChange > 0 ? '+' : '') + g.solChange.toFixed(3) + ' ◎' : '—';
+    const timeStr = new Date(g.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    item.innerHTML = `
+      <div class="phi-result ${resultClass}">${resultEmoji}</div>
+      <div class="phi-info">
+        <div class="phi-game">⬡ Bubble Shooter · ${resultLabel}</div>
+        <div class="phi-detail">${g.reason === 'time' ? '⏱ Time up' : g.reason === 'forfeit' ? '🚪 Opponent forfeited' : '🎉 Grid cleared'} · ${timeStr}</div>
+      </div>
+      <div class="phi-score">
+        <div class="phi-score-num">${g.myScore} – ${g.oppScore}</div>
+        <div class="phi-score-lbl">Score</div>
+      </div>
+      <div class="phi-sol">
+        <div class="phi-sol-val ${solClass}">${solStr}</div>
+        <div class="phi-sol-lbl">${g.bet > 0 ? '◎ ' + g.bet.toFixed(3) + ' bet' : 'No bet'}</div>
+      </div>`;
+    el.appendChild(item);
+  });
+}
+
+function renderAchievements() {
+  const grid = document.getElementById('ach-grid');
+  grid.innerHTML = '';
+  ACHIEVEMENTS.forEach(ach => {
+    const unlocked = ach.req(profileStats);
+    if (unlocked) profileStats.unlockedAchs.add(ach.id);
+    const el = document.createElement('div');
+    el.className = `pp-ach-item ${unlocked ? 'unlocked' : 'locked'}`;
+    el.innerHTML = `
+      <div class="pp-ach-icon ${unlocked ? 'ach-unlocked-icon' : 'ach-locked-icon'}">${ach.icon}</div>
+      <div class="pp-ach-text">
+        <div class="pp-ach-name">${ach.name}</div>
+        <div class="pp-ach-desc">${ach.desc}</div>
+        <div class="${unlocked ? 'pp-ach-unlocked-lbl' : 'pp-ach-locked-lbl'}">${unlocked ? '✓ Unlocked' : '🔒 Locked'}</div>
+      </div>`;
+    grid.appendChild(el);
+  });
+}
+
+function switchProfileTab(tab, el) {
+  document.querySelectorAll('.pp-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.pp-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById('tab-' + tab).style.display = 'block';
+}
+
+function switchPeriod(period, el) {
+  currentPeriod = period;
+  document.querySelectorAll('.pp-period-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderStats();
+}
+
+// Called after each game to record stats
+function recordGameResult(myPlayerIdx, result, reason, p1Score, p2Score, bet, solChange) {
+  const myScore = myPlayerIdx === 0 ? p1Score : p2Score;
+  const oppScore = myPlayerIdx === 0 ? p2Score : p1Score;
+
+  profileStats.gamesPlayed++;
+  profileStats.totalWagered += bet;
+  profileStats.totalScore += myScore;
+  if (myScore > profileStats.bestScore) profileStats.bestScore = myScore;
+  profileStats.bubblesPopped += myScore + oppScore;
+
+  if (result === 'win' || result === 'forfeit_win') {
+    profileStats.wins++;
+    profileStats.currentStreak++;
+    if (profileStats.currentStreak > profileStats.longestStreak) profileStats.longestStreak = profileStats.currentStreak;
+    if (result === 'forfeit_win') profileStats.forfeitWins++;
+    profileStats.totalWon += bet > 0 ? bet * 2 : 0;
+    profileStats.netProfit += solChange;
+  } else if (result === 'loss') {
+    profileStats.losses++;
+    profileStats.currentStreak = 0;
+    profileStats.netProfit += solChange;
+  } else {
+    profileStats.draws++;
+    profileStats.currentStreak = 0;
+  }
+
+  profileStats.gameHistory.push({
+    result, reason, myScore, oppScore, bet, solChange,
+    time: Date.now()
+  });
+  if (profileStats.gameHistory.length > 50) profileStats.gameHistory.shift();
+
+  // XP + level
+  const { level } = getLevelXP();
+  document.getElementById('profile-btn-level').textContent = level;
+
+  // Update lobby stats
+  document.getElementById('tab-games-count').textContent = profileStats.gamesPlayed + ' Games';
+  document.getElementById('ls-games').textContent = profileStats.gamesPlayed;
+  document.getElementById('ls-best').textContent = profileStats.bestScore > 0 ? profileStats.bestScore : '—';
+
+  // Check new achievements
+  checkNewAchievements();
+}
+
+function checkNewAchievements() {
+  const prevSize = profileStats.unlockedAchs.size;
+  ACHIEVEMENTS.forEach(a => { if (a.req(profileStats)) profileStats.unlockedAchs.add(a.id); });
+  const newCount = profileStats.unlockedAchs.size - prevSize;
+  if (newCount > 0) {
+    const notif = document.getElementById('profile-notif');
+    const current = parseInt(notif.dataset.count || '0') + newCount;
+    notif.dataset.count = current;
+    notif.textContent = current;
+    notif.style.display = 'flex';
+  }
+}
+
+function clearProfileNotif() {
+  const notif = document.getElementById('profile-notif');
+  notif.style.display = 'none';
+  notif.dataset.count = '0';
+}
+
+// Override openProfile to also clear notif
+const _origOpenProfile = openProfile;
+openProfile = function() {
+  _origOpenProfile();
+  clearProfileNotif();
+};
+
+// Connect WS on load for faster room creation
+setTimeout(() => { connectWS(); }, 500);
+</script>
+</body>
+</html>
