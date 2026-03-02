@@ -1082,7 +1082,221 @@ body{
 .pp-ach-desc { font-size: 0.65rem; color: var(--muted); line-height: 1.3; }
 .pp-ach-unlocked-lbl { font-size: 0.58rem; color: var(--purple); margin-top: 3px; font-weight: 600; }
 .pp-ach-locked-lbl { font-size: 0.58rem; color: var(--muted); margin-top: 3px; }
+/* ============================================
+   MOBILE & TABLET — HexShot Responsive
+   ============================================ */
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+* { box-sizing: border-box; }
+
+@media (max-width: 1024px) {
+  .sidebar { display: none !important; }
+  .main-content { margin-left: 0 !important; width: 100% !important; }
+}
+
+@media (max-width: 768px) {
+
+  /* NAVBAR */
+  .navbar, #navbar, header {
+    padding: 8px 12px !important;
+    height: 56px !important;
+  }
+  .logo, #logo { font-size: 16px !important; }
+  #btn-connect, .wallet-btn {
+    height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 0.75rem !important;
+  }
+  .avatar, #profile-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+  }
+
+  /* LAYOUT — bet panel above game */
+  .game-layout, #game-layout, .main-area {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+  .bet-panel, #bet-panel, .left-panel {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: unset !important;
+  }
+  .game-area, #game-area, .right-panel {
+    width: 100% !important;
+  }
+
+  /* GAME BOARD */
+  canvas#gameCanvas, #gameCanvas {
+    width: 100% !important;
+    max-width: 420px !important;
+    height: auto !important;
+    display: block !important;
+    margin: 0 auto !important;
+  }
+  .board, .game-board {
+    width: 100% !important;
+    max-width: 420px !important;
+    aspect-ratio: 1 / 1 !important;
+    margin: auto !important;
+  }
+  .cell {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  /* LIVE GAMES LIST */
+  .live-games, #live-games {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+  .game-card, .room-card {
+    width: 100% !important;
+  }
+  .game-card button, .room-card button {
+    width: 100% !important;
+    height: 44px !important;
+  }
+
+  /* ALL BUTTONS touch friendly */
+  button, .btn, [role="button"] {
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+  }
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* CREATE ROOM / JOIN BUTTONS */
+  #create-room-btn, #join-room-btn,
+  button[onclick*="createRoom"], button[onclick*="joinRoom"] {
+    width: 100% !important;
+    height: 48px !important;
+    font-size: 0.9rem !important;
+  }
+
+  /* WAITING OVERLAY */
+  .waiting-overlay, #waiting-overlay {
+    padding: 20px !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* TOAST */
+  .toast, #toast {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 80px !important;
+    width: auto !important;
+    text-align: center !important;
+  }
+
+  /* FOOTER */
+  footer, .footer {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+    text-align: center !important;
+    padding: 16px 12px !important;
+  }
+  footer button, .footer button {
+    width: 100% !important;
+  }
+
+  /* MODALS */
+  .modal, .wallet-modal, #wallet-modal {
+    padding: 20px 16px !important;
+    width: 92vw !important;
+    max-width: 400px !important;
+    margin: auto !important;
+  }
+
+  /* SCORES / STATS */
+  .score-panel, .stats-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+}
+
+/* CHAT — MOBILE OVERLAY */
+@media (max-width: 768px) {
+
+  /* Hide desktop chat sidebar */
+  .chat-sidebar, #chat-sidebar, .global-chat {
+    display: none !important;
+  }
+
+  /* Floating chat button */
+  .chat-fab, #chat-fab {
+    position: fixed !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 12px !important;
+    background: #a855f7 !important;
+    box-shadow: 0 0 12px #a855f7 !important;
+    z-index: 999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 22px !important;
+    cursor: pointer !important;
+    border: none !important;
+  }
+
+  /* Overlay background */
+  .chat-overlay, #chat-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,0.45) !important;
+    backdrop-filter: blur(4px) !important;
+    z-index: 998 !important;
+    display: none;
+  }
+  .chat-overlay.open, #chat-overlay.open { display: block !important; }
+
+  /* Chat panel */
+  .chat-panel, #chat-panel {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 70% !important;
+    max-width: 360px !important;
+    height: 100% !important;
+    background: #0b0f1c !important;
+    border-radius: 16px 0 0 16px !important;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.6) !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.25s ease !important;
+    z-index: 999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .chat-panel.open, #chat-panel.open {
+    transform: translateX(0) !important;
+  }
+
+  body.chat-open { overflow: hidden !important; }
+}
+
+@media (max-width: 480px) {
+  .modal, .wallet-modal, #wallet-modal {
+    width: 96vw !important;
+    padding: 16px 12px !important;
+  }
+  #gameCanvas {
+    max-width: 340px !important;
+  }
+}
 </style>
 </head>
 <body>
