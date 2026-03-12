@@ -166,7 +166,7 @@ async function tryAutoConnect(){
   try {
     const resp   = await phantom.connect({ onlyIfTrusted: true });
     const pubKey = resp.publicKey.toString();
-    if (pubKey === HOUSE_WALLET) return;   // never auto-connect as house
+    if (pubKey === HOUSE_WALLET) return;
     phantomPublicKey = pubKey;
     walletConnected  = true;
     walletBalance    = await fetchBalance(pubKey);
