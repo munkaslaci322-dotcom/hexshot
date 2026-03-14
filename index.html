@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HexShot — Solana Bubble Shooter</title>
+  <script src="https://bundle.run/buffer@6.0.3"></script>
   <script>
   // Buffer polyfill for Solana Web3.js in browser
   window.global = window;
   window.process = { env: {} };
+    window.Buffer = window.Buffer || buffer.Buffer;
 </script>
 <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 <style>
