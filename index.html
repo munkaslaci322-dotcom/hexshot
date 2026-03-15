@@ -692,11 +692,18 @@ body::after {
 .gp-live-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink 1.2s infinite;box-shadow:0 0 6px var(--red);}
 
 .gp-body{
-  flex:1;
-  display:flex;align-items:center;justify-content:center;
-  padding:36px;
-  background:radial-gradient(ellipse at 50% 30%, rgba(168,85,247,0.08) 0%, transparent 65%);
-  flex-direction:column;gap:22px;
+  <div class="gp-body" style="padding:20px;flex-direction:column;align-items:stretch;">
+  <div style="font-family:'Orbitron',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.15em;color:var(--purple);margin-bottom:14px;padding:0 4px;">
+    ⬡ OPEN ROOMS — JOIN & PLAY
+  </div>
+  <div id="live-rooms-list" style="flex:1;overflow-y:auto;">
+    <div style="text-align:center;padding:40px 20px;color:var(--muted)">
+      <div style="font-size:2rem;margin-bottom:10px">🎮</div>
+      <div style="font-size:0.85rem;">No open rooms yet</div>
+    </div>
+  </div>
+  <div id="waiting-countdown" style="text-align:center;font-size:0.72rem;color:var(--yellow);margin-top:10px;font-family:'Space Mono',monospace;"></div>
+</div>
 }
 
 .gp-preview-canvas{
